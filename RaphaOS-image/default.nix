@@ -1,5 +1,5 @@
 { lib, pkgs, vmTools, fetchurl, systemd, gptfdisk, util-linux, dosfstools
-, e2fsprogs, stdenv, ... }:
+, e2fsprogs, stdenv, makeWrapper, ... }:
 let
   files = stdenv.mkDerivation {
     name = "files";
@@ -8,6 +8,34 @@ let
     installPhase = ''
       mkdir -p $out
       cp -vr $src/* $out
+    '';
+  };
+  scripts = stdenv.mkDerivation {
+    name = "scripts";
+    src = ./scripts;
+    nativeBuildInputs = [ makeWrapper ];
+    phases = [ "unpackPhase" "installPhase" "postFixup" ];
+    installPhase = ''
+      mkdir -p $out
+      cp -vr $src/* $out
+    '';
+    postFixup = ''
+      wrapProgram $out/build.sh \
+      --set PATH "${
+        with pkgs;
+        lib.makeBinPath [
+          gptfdisk
+          util-linux
+          dosfstools
+          e2fsprogs
+          dpkg
+          coreutils
+          gnutar
+          systemd
+        ]
+      }" \
+      --set FILES_DIR ${files} \
+      --set NIX_STORE_DIR ${builtins.storeDir}
     '';
   };
 in vmTools.makeImageFromDebDist {
@@ -74,7 +102,7 @@ in vmTools.makeImageFromDebDist {
 
   size = 8192;
 
-  buildCommand = import ./scripts/build.nix {
-    inherit lib pkgs files gptfdisk util-linux dosfstools e2fsprogs systemd;
-  };
+  buildCommand = ''
+    ${scripts}/build.sh
+  '';
 }
