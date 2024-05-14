@@ -1,6 +1,16 @@
 { lib, pkgs, vmTools, fetchurl, systemd, gptfdisk, util-linux, dosfstools
-, e2fsprogs, ... }:
-vmTools.makeImageFromDebDist {
+, e2fsprogs, stdenv, ... }:
+let
+  files = stdenv.mkDerivation {
+    name = "files";
+    src = ./files;
+    phases = [ "unpackPhase" "installPhase" ];
+    installPhase = ''
+      mkdir -p $out
+      cp -v $src/* $out
+    '';
+  };
+in vmTools.makeImageFromDebDist {
   name = "RaphaOS";
   fullName = "RaphaOS";
 
@@ -39,7 +49,7 @@ vmTools.makeImageFromDebDist {
     "diffutils"
     "libc-bin"
     "bsdutils"
-    "less" 
+    "less"
 
     # Needed because it provides /etc/login.defs, whose absence causes
     # the "passwd" post-installs script to fail.
@@ -65,6 +75,6 @@ vmTools.makeImageFromDebDist {
   size = 8192;
 
   buildCommand = import ./scripts/build.nix {
-    inherit lib pkgs gptfdisk util-linux dosfstools e2fsprogs systemd;
+    inherit lib pkgs files gptfdisk util-linux dosfstools e2fsprogs systemd;
   };
 }

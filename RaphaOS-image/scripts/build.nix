@@ -1,4 +1,4 @@
-{ lib, pkgs, gptfdisk, util-linux, dosfstools, e2fsprogs, systemd }: ''
+{ lib, pkgs, files, gptfdisk, util-linux, dosfstools, e2fsprogs, systemd }: ''
   disk=/dev/vda
   # Create partition table
   ${gptfdisk}/bin/sgdisk $disk \
@@ -61,6 +61,8 @@
   PATH=/usr/bin:/bin:/usr/sbin:/sbin $chroot /mnt \
   dpkg --install --force-depends $debs_mnt < /dev/null
 
+  cp -v ${files}/fstab /mnt/etc/fstab
+
   # update-grub needs udev to detect the filesystem UUID -- without,
   # we'll get root=/dev/vda2 on the cmdline which will only work in
   # a limited set of scenarios.
@@ -70,10 +72,6 @@
 
   chroot /mnt /bin/bash -exuo pipefail <<CHROOT
   export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-
-  # update-initramfs needs to know where its root filesystem lives,
-  # so that the initial userspace is capable of finding and mounting it.
-  echo LABEL=root / ext4 defaults > /etc/fstab
 
   # actually generate an initramfs
   update-initramfs -k all -c

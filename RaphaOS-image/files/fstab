@@ -1,0 +1,3 @@
+# TODO: Use UUID instead of labels
+LABEL=root / ext4 defaults
+LABEL=ESP /boot/efi vfat defaults
