@@ -61,8 +61,13 @@
   PATH=/usr/bin:/bin:/usr/sbin:/sbin $chroot /mnt \
   dpkg --install --force-depends $debs_mnt < /dev/null
 
-  cp -v ${files}/fstab /mnt/etc/fstab
-  cp -v ${files}/sources.list /mnt/etc/apt/sources.list
+  # Copy configuration files
+  cp -v ${files}/fstab /mnt/etc/
+  cp -v ${files}/sources.list /mnt/etc/apt/
+  cp -v ${files}/systemd/ssh-generate-host-keys.service /mnt/etc/systemd/system/
+
+  # Remove SSH host keys
+  rm /mnt/etc/ssh/ssh_host_*
 
   # update-grub needs udev to detect the filesystem UUID -- without,
   # we'll get root=/dev/vda2 on the cmdline which will only work in
@@ -87,6 +92,9 @@
   sed -i '/TIMEOUT_HIDDEN/d' /etc/default/grub
   update-grub
   grub-install --target x86_64-efi
+
+  # Enable SSH server
+  systemctl enable ssh ssh-generate-host-keys
 
   # Set a password so we can log into the booted system
   echo root:root | chpasswd

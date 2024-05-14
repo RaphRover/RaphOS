@@ -7,7 +7,7 @@ let
     phases = [ "unpackPhase" "installPhase" ];
     installPhase = ''
       mkdir -p $out
-      cp -v $src/* $out
+      cp -vr $src/* $out
     '';
   };
 in vmTools.makeImageFromDebDist {
