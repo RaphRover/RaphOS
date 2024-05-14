@@ -62,6 +62,7 @@
   dpkg --install --force-depends $debs_mnt < /dev/null
 
   cp -v ${files}/fstab /mnt/etc/fstab
+  cp -v ${files}/sources.list /mnt/etc/apt/sources.list
 
   # update-grub needs udev to detect the filesystem UUID -- without,
   # we'll get root=/dev/vda2 on the cmdline which will only work in
