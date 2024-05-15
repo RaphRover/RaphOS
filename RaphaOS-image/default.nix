@@ -120,12 +120,19 @@ let
     ];
   }) { inherit fetchurl; };
 
+  debs-stages = lib.lists.foldl (acc: closure:
+    let
+      flat-acc = lib.lists.flatten acc;
+      unique-closure = lib.lists.subtractLists flat-acc
+        (lib.strings.splitString " " (builtins.toString closure));
+    in acc ++ [ unique-closure ]) [ ] [ debs-stage1 debs-stage2 ];
+
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
   inherit name size;
 
   inherit debs_preunpack;
 
-  debs = (lib.intersperse "|" [ debs-stage1 debs-stage2 ]);
+  debs = (lib.intersperse "|" debs-stages);
 
   preVM = vmTools.createEmptyImage {
     inherit size;

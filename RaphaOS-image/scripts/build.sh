@@ -6,6 +6,8 @@ my_chroot() {
     $(type -tP chroot) $@
 }
 
+echo $debs
+
 DISK=/dev/vda
 # Create partition table
 sgdisk $DISK \
