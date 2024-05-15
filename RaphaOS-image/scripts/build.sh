@@ -37,11 +37,11 @@ ln -s /usr/lib64 /mnt/lib64
 # (which have lots of circular dependencies) from barfing.
 echo "unpacking Debs..."
 
-for deb in $debs; do
-    if test "$deb" != "|"; then
+echo ${debs_preunpack}
+
+for deb in ${debs_preunpack}; do
     echo "$deb..."
     dpkg-deb --fsys-tarfile "$deb" | tar -x --keep-directory-symlink -C /mnt
-    fi
 done
 
 # Now install the .debs.  This is basically just to register
@@ -49,16 +49,40 @@ done
 # run.
 echo "installing Debs..."
 
+# chroot /mnt /usr/sbin/update-passwd
+# debs_mnt=
+# for deb in $debs; do
+#     debs_mnt="$debs_mnt /inst$deb";
+# done
+
 export DEBIAN_FRONTEND=noninteractive
-chroot=$(type -tP chroot)
+# chroot=$(type -tP chroot)
+# PATH=/usr/bin:/bin:/usr/sbin:/sbin $chroot /mnt \
+# dpkg --install --force-depends $debs_mnt < /dev/null
 
-debs_mnt=
-for deb in $debs; do
-    debs_mnt="$debs_mnt /inst$deb";
+oldIFS="$IFS"
+IFS="|"
+for component in $debs; do
+    IFS="$oldIFS"
+    echo
+    echo ">>> INSTALLING COMPONENT: $component"
+    debs=
+    for i in $component; do
+        debs="$debs /inst/$i";
+    done
+
+    # Create a fake start-stop-daemon script, as done in debootstrap.
+    # mv "/mnt/sbin/start-stop-daemon" "/mnt/sbin/start-stop-daemon.REAL"
+    # echo "#!/bin/true" > "/mnt/sbin/start-stop-daemon"
+    # chmod 755 "/mnt/sbin/start-stop-daemon"
+
+    chroot=$(type -tP chroot)
+    PATH=/usr/bin:/bin:/usr/sbin:/sbin $chroot /mnt \
+    apt-get install -y $debs < /dev/null
+
+    # Move the real start-stop-daemon back into its place.
+    # mv "/mnt/sbin/start-stop-daemon.REAL" "/mnt/sbin/start-stop-daemon"
 done
-
-PATH=/usr/bin:/bin:/usr/sbin:/sbin $chroot /mnt \
-dpkg --install --force-depends $debs_mnt < /dev/null
 
 # Copy configuration files
 cp -v ${FILES_DIR}/fstab /mnt/etc/
@@ -71,7 +95,7 @@ rm /mnt/etc/ssh/ssh_host_*
 # update-grub needs udev to detect the filesystem UUID -- without,
 # we'll get root=/dev/vda2 on the cmdline which will only work in
 # a limited set of scenarios.
-systemd-udevd &
+$UDEVD &
 udevadm trigger
 udevadm settle
 

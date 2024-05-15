@@ -1,6 +1,8 @@
-{ lib, pkgs, vmTools, fetchurl, systemd, gptfdisk, util-linux, dosfstools
-, e2fsprogs, stdenv, makeWrapper, ... }:
+{ lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, ... }:
 let
+  name = "RaphaOS";
+  size = 8192;
+
   files = stdenv.mkDerivation {
     name = "files";
     src = ./files;
@@ -10,6 +12,7 @@ let
       cp -vr $src/* $out
     '';
   };
+
   scripts = stdenv.mkDerivation {
     name = "scripts";
     src = ./scripts;
@@ -35,12 +38,10 @@ let
         ]
       }" \
       --set FILES_DIR ${files} \
-      --set NIX_STORE_DIR ${builtins.storeDir}
+      --set NIX_STORE_DIR ${builtins.storeDir} \
+      --set UDEVD "${pkgs.systemd}/lib/systemd/systemd-udevd"
     '';
   };
-in vmTools.makeImageFromDebDist {
-  name = "RaphaOS";
-  fullName = "RaphaOS";
 
   packagesLists = [
     (fetchurl {
@@ -54,55 +55,85 @@ in vmTools.makeImageFromDebDist {
   ];
   urlPrefix = "mirror://ubuntu";
 
-  packages = [
-    "base-passwd"
-    "dpkg"
-    "libc6-dev"
-    "perl"
-    "bash"
-    "dash"
-    "gzip"
-    "bzip2"
-    "tar"
-    "grep"
-    "mawk"
-    "sed"
-    "findutils"
-    "curl"
-    "patch"
-    "locales"
-    "coreutils"
-    "util-linux"
-    "file"
-    "diffutils"
-    "libc-bin"
-    "bsdutils"
-    "less"
+  debs_preunpack = import (vmTools.debClosureGenerator {
+    name = "preunpack";
+    inherit packagesLists urlPrefix;
+    packages = [
+      "base-files"
+      "apt"
+      "dpkg"
+      "libc-bin"
+      "dash"
+      "coreutils"
+      "diffutils"
+      "sed"
+      "login"
+      "passwd"
+      "debconf"
+      "perl"
+    ];
+  }) { inherit fetchurl; };
 
-    # Needed because it provides /etc/login.defs, whose absence causes
-    # the "passwd" post-installs script to fail.
-    "login"
-    "passwd"
+  debs-stage1 = import (vmTools.debClosureGenerator {
+    name = "stage1";
+    inherit packagesLists urlPrefix;
+    packages = [ "base-passwd" "init-system-helpers" "grep" ];
+  }) { inherit fetchurl; };
 
-    "systemd" # init system
-    "init-system-helpers" # satisfy undeclared dependency on update-rc.d in udev hooks
-    "systemd-sysv" # provides systemd as /sbin/init
+  debs-stage2 = import (vmTools.debClosureGenerator {
+    name = "stage2";
+    inherit packagesLists urlPrefix;
+    packages = [
+      "base-files"
+      "apt"
+      "dpkg"
+      "libc-bin"
+      "bash"
+      "dash"
+      "coreutils"
+      "diffutils"
+      "sed"
+      "login"
+      "passwd"
+      "debconf"
+      "perl"
+      "findutils"
+      "curl"
+      "patch"
+      "locales"
+      "util-linux"
+      "file"
+      "bsdutils"
+      "less"
 
-    "linux-image-generic" # kernel
-    "initramfs-tools" # hooks for generating an initramfs
-    "e2fsprogs" # initramfs wants fsck
-    "grub-efi" # boot loader
-    "zstd" # compress kernel using zstd
+      "systemd" # init system
+      "systemd-sysv" # provides systemd as /sbin/init
+      "linux-image-generic" # kernel
+      "initramfs-tools" # hooks for generating an initramfs
+      "e2fsprogs" # initramfs wants fsck
+      "grub-efi" # boot loader
+      "zstd" # compress kernel using zstd
 
-    "apt" # package manager
-    "ncurses-base" # terminfo to let applications talk to terminals better
-    "openssh-server" # Remote login
-    "dbus" # networkctl
-  ];
+      "apt" # package manager
+      "ncurses-base" # terminfo to let applications talk to terminals better
+      "openssh-server" # Remote login
+      "dbus" # networkctl
+    ];
+  }) { inherit fetchurl; };
 
-  size = 8192;
+in vmTools.runInLinuxVM (stdenv.mkDerivation {
+  inherit name size;
+
+  inherit debs_preunpack;
+
+  debs = (lib.intersperse "|" [ debs-stage1 debs-stage2 ]);
+
+  preVM = vmTools.createEmptyImage {
+    inherit size;
+    fullName = name;
+  };
 
   buildCommand = ''
     ${scripts}/build.sh
   '';
-}
+})
