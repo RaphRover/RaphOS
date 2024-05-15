@@ -55,6 +55,7 @@ let
   ];
   urlPrefix = "mirror://ubuntu";
 
+  # Packages that provide programs needed to install other packages
   debs_preunpack = import (vmTools.debClosureGenerator {
     name = "preunpack";
     inherit packagesLists urlPrefix;
@@ -67,13 +68,12 @@ let
       "coreutils"
       "diffutils"
       "sed"
-      "login"
-      "passwd"
       "debconf"
       "perl"
     ];
   }) { inherit fetchurl; };
 
+  # Packages needed by installation scripts in later stages
   debs-stage1 = import (vmTools.debClosureGenerator {
     name = "stage1";
     inherit packagesLists urlPrefix;
@@ -114,7 +114,6 @@ let
       "grub-efi" # boot loader
       "zstd" # compress kernel using zstd
 
-      "apt" # package manager
       "ncurses-base" # terminfo to let applications talk to terminals better
       "openssh-server" # Remote login
       "dbus" # networkctl
