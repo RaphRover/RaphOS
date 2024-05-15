@@ -1,23 +1,29 @@
 #!/bin/sh -e
 
-disk=/dev/vda
+my_chroot() {
+    DEBIAN_FRONTEND=noninteractive \
+    PATH=/usr/bin:/bin:/usr/sbin:/sbin \
+    $(type -tP chroot) $@
+}
+
+DISK=/dev/vda
 # Create partition table
-sgdisk $disk \
+sgdisk $DISK \
     -n1:0:+100M -t1:ef00 -c1:esp \
     -n2:0:0 -t2:8300 -c2:root
 
 # Ensure that the partition block devices (/dev/vda1 etc) exist
-partx -u "$disk"
+partx -u "$DISK"
 # Make a FAT filesystem for the EFI System Partition
-mkfs.vfat -F32 -n ESP "$disk"1
+mkfs.vfat -F32 -n ESP "$DISK"1
 # Make an ext4 filesystem for the system root
-mkfs.ext4 "$disk"2 -L root
+mkfs.ext4 "$DISK"2 -L root
 
 # Mount everything to /mnt and provide some directories needed later on
 mkdir /mnt
-mount -t ext4 "$disk"2 /mnt
+mount -t ext4 "$DISK"2 /mnt
 mkdir -p /mnt/{proc,dev,sys,boot/efi}
-mount -t vfat "$disk"1 /mnt/boot/efi
+mount -t vfat "$DISK"1 /mnt/boot/efi
 mount -o bind /proc /mnt/proc
 mount -o bind /dev /mnt/dev
 mount -t sysfs sysfs /mnt/sys
@@ -33,32 +39,14 @@ ln -s /usr/sbin /mnt/sbin
 ln -s /usr/lib /mnt/lib
 ln -s /usr/lib64 /mnt/lib64
 
-# Unpack the .debs.  We do this to prevent pre-install scripts
-# (which have lots of circular dependencies) from barfing.
-echo "unpacking Debs..."
-
-echo ${debs_preunpack}
+echo "Preunpacking Debs..."
 
 for deb in ${debs_preunpack}; do
     echo "$deb..."
-    dpkg-deb --fsys-tarfile "$deb" | tar -x --keep-directory-symlink -C /mnt
+    dpkg-deb --extract "$deb" /mnt
 done
 
-# Now install the .debs.  This is basically just to register
-# them with dpkg and to make their pre/post-install scripts
-# run.
 echo "installing Debs..."
-
-# chroot /mnt /usr/sbin/update-passwd
-# debs_mnt=
-# for deb in $debs; do
-#     debs_mnt="$debs_mnt /inst$deb";
-# done
-
-export DEBIAN_FRONTEND=noninteractive
-# chroot=$(type -tP chroot)
-# PATH=/usr/bin:/bin:/usr/sbin:/sbin $chroot /mnt \
-# dpkg --install --force-depends $debs_mnt < /dev/null
 
 oldIFS="$IFS"
 IFS="|"
@@ -68,26 +56,16 @@ for component in $debs; do
     echo ">>> INSTALLING COMPONENT: $component"
     debs=
     for i in $component; do
-        debs="$debs /inst/$i";
+        debs="$debs /inst$i";
     done
 
-    # Create a fake start-stop-daemon script, as done in debootstrap.
-    # mv "/mnt/sbin/start-stop-daemon" "/mnt/sbin/start-stop-daemon.REAL"
-    # echo "#!/bin/true" > "/mnt/sbin/start-stop-daemon"
-    # chmod 755 "/mnt/sbin/start-stop-daemon"
-
-    chroot=$(type -tP chroot)
-    PATH=/usr/bin:/bin:/usr/sbin:/sbin $chroot /mnt \
-    apt-get install -y $debs < /dev/null
-
-    # Move the real start-stop-daemon back into its place.
-    # mv "/mnt/sbin/start-stop-daemon.REAL" "/mnt/sbin/start-stop-daemon"
+    my_chroot /mnt apt-get install -y $debs < /dev/null
 done
 
-# Copy configuration files
-cp -v ${FILES_DIR}/fstab /mnt/etc/
-cp -v ${FILES_DIR}/sources.list /mnt/etc/apt/
-cp -v ${FILES_DIR}/systemd/ssh-generate-host-keys.service /mnt/etc/systemd/system/
+# Install configuration files
+install -v -m 644 ${FILES_DIR}/fstab /mnt/etc/
+install -v -m 644 ${FILES_DIR}/apt/sources.list /mnt/etc/apt/
+install -v -m 644 ${FILES_DIR}/systemd/ssh-generate-host-keys.service /mnt/etc/systemd/system/
 
 # Remove SSH host keys
 rm /mnt/etc/ssh/ssh_host_*
@@ -99,9 +77,7 @@ $UDEVD &
 udevadm trigger
 udevadm settle
 
-chroot /mnt /bin/bash -exuo pipefail <<CHROOT
-export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-
+my_chroot /mnt /bin/bash -exuo pipefail <<CHROOT
 # actually generate an initramfs
 update-initramfs -k all -c
 
