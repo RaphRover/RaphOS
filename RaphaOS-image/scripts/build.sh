@@ -65,10 +65,7 @@ for component in $debs; do
 done
 
 # Install configuration files
-install -v -m 644 ${FILES_DIR}/fstab /mnt/etc/
-install -v -m 644 ${FILES_DIR}/apt/sources.list /mnt/etc/apt/
-install -v -m 644 ${FILES_DIR}/systemd/ssh-generate-host-keys.service /mnt/etc/systemd/system/
-install -v -m 644 ${FILES_DIR}/default/grub /mnt/etc/default/
+cp -vr "${FILES_DIR}/etc" /mnt/
 
 # Remove SSH host keys
 rm /mnt/etc/ssh/ssh_host_*
