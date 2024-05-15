@@ -66,6 +66,7 @@ done
 install -v -m 644 ${FILES_DIR}/fstab /mnt/etc/
 install -v -m 644 ${FILES_DIR}/apt/sources.list /mnt/etc/apt/
 install -v -m 644 ${FILES_DIR}/systemd/ssh-generate-host-keys.service /mnt/etc/systemd/system/
+install -v -m 644 ${FILES_DIR}/default/grub /mnt/etc/default/
 
 # Remove SSH host keys
 rm /mnt/etc/ssh/ssh_host_*
@@ -78,17 +79,7 @@ udevadm trigger
 udevadm settle
 
 my_chroot /mnt /bin/bash -exuo pipefail <<CHROOT
-# actually generate an initramfs
-update-initramfs -k all -c
-
 # Install the boot loader to the EFI System Partition
-# Remove "quiet" from the command line so that we can see what's happening during boot
-cat >> /etc/default/grub <<EOF
-GRUB_TIMEOUT=5
-GRUB_CMDLINE_LINUX=""
-GRUB_CMDLINE_LINUX_DEFAULT=""
-EOF
-sed -i '/TIMEOUT_HIDDEN/d' /etc/default/grub
 update-grub
 grub-install --target x86_64-efi
 
