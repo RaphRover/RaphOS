@@ -39,14 +39,14 @@ ln -s /usr/sbin /mnt/sbin
 ln -s /usr/lib /mnt/lib
 ln -s /usr/lib64 /mnt/lib64
 
-echo "Preunpacking Debs..."
+echo "Unpacking Debs..."
 
-for deb in ${debs_preunpack}; do
+for deb in ${debs_unpack}; do
     echo "$deb..."
     dpkg-deb --extract "$deb" /mnt
 done
 
-echo "installing Debs..."
+echo "Installing Debs..."
 
 oldIFS="$IFS"
 IFS="|"
@@ -59,7 +59,7 @@ for component in $debs; do
         debs="$debs /inst$i";
     done
 
-    my_chroot /mnt apt-get install -y $debs < /dev/null
+    my_chroot /mnt dpkg --install $debs < /dev/null
 done
 
 # Install configuration files

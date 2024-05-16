@@ -3,6 +3,8 @@ let
   name = "RaphaOS";
   size = 8192;
 
+  tools = import ./tools.nix { inherit lib pkgs; };
+
   files = stdenv.mkDerivation {
     name = "files";
     src = ./files;
@@ -56,12 +58,11 @@ let
   urlPrefix = "mirror://ubuntu";
 
   # Packages that provide programs needed to install other packages
-  debs_preunpack = import (vmTools.debClosureGenerator {
-    name = "preunpack";
+  debs-unpack = import (tools.debClosureGenerator {
+    name = "debs-unpack";
     inherit packagesLists urlPrefix;
     packages = [
       "base-files"
-      "apt"
       "dpkg"
       "libc-bin"
       "dash"
@@ -73,17 +74,13 @@ let
     ];
   }) { inherit fetchurl; };
 
-  # Packages needed by installation scripts in later stages
-  debs-stage1 = import (vmTools.debClosureGenerator {
-    name = "stage1";
-    inherit packagesLists urlPrefix;
-    packages = [ "base-passwd" "init-system-helpers" "grep" ];
-  }) { inherit fetchurl; };
-
-  debs-stage2 = import (vmTools.debClosureGenerator {
-    name = "stage2";
+  debs-install = import (tools.debClosureGenerator {
+    name = "debs-install";
     inherit packagesLists urlPrefix;
     packages = [
+      "base-passwd"
+      "init-system-helpers"
+      "grep"
       "base-files"
       "apt"
       "dpkg"
@@ -110,11 +107,11 @@ let
 
       "systemd" # init system
       "systemd-sysv" # provides systemd as /sbin/init
-      "linux-image-generic" # kernel
-      "initramfs-tools" # hooks for generating an initramfs
       "e2fsprogs" # initramfs wants fsck
-      "grub-efi" # boot loader
+      "initramfs-tools" # hooks for generating an initramfs
       "zstd" # compress kernel using zstd
+      "linux-image-generic" # kernel
+      "grub-efi" # boot loader
 
       "ncurses-base" # terminfo to let applications talk to terminals better
       "openssh-server" # Remote login
@@ -128,19 +125,12 @@ let
     ];
   }) { inherit fetchurl; };
 
-  debs-stages = lib.lists.foldl (acc: closure:
-    let
-      flat-acc = lib.lists.flatten acc;
-      unique-closure = lib.lists.subtractLists flat-acc
-        (lib.strings.splitString " " (builtins.toString closure));
-    in acc ++ [ unique-closure ]) [ ] [ debs-stage1 debs-stage2 ];
-
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
   inherit name size;
 
-  inherit debs_preunpack;
+  debs_unpack = debs-unpack;
 
-  debs = (lib.intersperse "|" debs-stages);
+  debs = (lib.intersperse "|" debs-install);
 
   preVM = vmTools.createEmptyImage {
     inherit size;
