@@ -62,6 +62,14 @@ let
       });
       urlPrefix = "mirror://ubuntu";
     }
+    {
+      name = "ros2";
+      packagesFile = (fetchurl {
+        url = "http://packages.ros.org/ros2-testing/ubuntu/dists/noble/main/binary-amd64/Packages.gz";
+        sha256 = "sha256-1R9ak/J9xxv/s9WL78uiqsYBZtoWgLlMdWxqXKJqbTY=";
+      });
+      urlPrefix = "http://packages.ros.org/ros2-testing/ubuntu";
+    }
   ];
 
   # Packages that provide programs needed to install other packages
@@ -129,6 +137,8 @@ let
       "iputils-ping"
       "systemd-resolved"
       "systemd-timesyncd"
+
+      "ros-jazzy-ros-base"
     ];
   }) { inherit fetchurl; };
 
