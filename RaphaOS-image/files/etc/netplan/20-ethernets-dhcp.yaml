@@ -1,0 +1,7 @@
+# Enable DHCP for all ethernet interfaces
+network:
+  ethernets:
+    alleths:
+      match:
+        name: en*
+      dhcp4: true

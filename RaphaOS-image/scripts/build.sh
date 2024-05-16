@@ -6,8 +6,6 @@ my_chroot() {
     $(type -tP chroot) $@
 }
 
-echo $debs
-
 DISK=/dev/vda
 # Create partition table
 sgdisk $DISK \
@@ -67,6 +65,9 @@ done
 # Install configuration files
 cp -vr "${FILES_DIR}/etc" /mnt/
 
+# Symlink resolv.conf to systemd-resolved
+ln -vsnf /lib/systemd/resolv.conf /mnt/etc/resolv.conf
+
 # Remove SSH host keys
 rm /mnt/etc/ssh/ssh_host_*
 
@@ -84,6 +85,9 @@ grub-install --target x86_64-efi
 
 # Enable SSH server
 systemctl enable ssh ssh-generate-host-keys
+
+# Enable Networkd
+systemctl enable systemd-networkd
 
 # Set a password so we can log into the booted system
 echo root:root | chpasswd

@@ -105,6 +105,8 @@ let
       "file"
       "bsdutils"
       "less"
+      "nano"
+      "vim"
 
       "systemd" # init system
       "systemd-sysv" # provides systemd as /sbin/init
@@ -117,6 +119,12 @@ let
       "ncurses-base" # terminfo to let applications talk to terminals better
       "openssh-server" # Remote login
       "dbus" # networkctl
+
+      "netplan.io"
+      "iproute2"
+      "iputils-ping"
+      "systemd-resolved"
+      "systemd-timesyncd"
     ];
   }) { inherit fetchurl; };
 
