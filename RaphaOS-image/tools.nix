@@ -1,27 +1,33 @@
 { lib, pkgs }:
 let inherit (pkgs) buildPackages runCommand;
 in {
-  debClosureGenerator = { name, packagesLists, urlPrefix, packages }:
+  debClosureGenerator = { name, packageLists, packages }:
 
     runCommand "${name}.nix" {
-      nativeBuildInputs = [ buildPackages.perl buildPackages.dpkg ];
+      nativeBuildInputs =
+        [ buildPackages.perl buildPackages.dpkg ];
     } ''
-      for i in ${toString packagesLists}; do
-        echo "adding $i..."
-        case $i in
+      ${toString (lib.lists.forEach packageLists (list: ''
+        echo "adding ${list.name}"
+        packagesFile=${toString list.packagesFile}
+        case $packagesFile in
           *.xz | *.lzma)
-            xz -d < $i >> ./Packages
+            xz -d < $packagesFile > ./Packages-${list.name}
             ;;
           *.bz2)
-            bunzip2 < $i >> ./Packages
+            bunzip2 < $packagesFile >> ./Packages-${list.name}
             ;;
           *.gz)
-            gzip -dc < $i >> ./Packages
+            gzip -dc < $packagesFile >> ./Packages-${list.name}
             ;;
         esac
-      done
+      ''))}
 
       perl -w ${./deb-closure.pl} \
-        ./Packages ${urlPrefix} ${toString packages} > $out
+        ${
+          toString (lib.lists.forEach packageLists
+            (list: "--package-list ./Packages-${list.name},${list.urlPrefix}"))
+        } \
+        -- ${toString packages} > $out
     '';
 }

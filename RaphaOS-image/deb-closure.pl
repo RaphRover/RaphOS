@@ -2,28 +2,34 @@ use strict;
 use Dpkg::Control;
 use Dpkg::Deps;
 use File::Basename;
+use Getopt::Long;
 
-my $packagesFile = shift @ARGV;
-my $urlPrefix = shift @ARGV;
+my %args = ();
+GetOptions(\%args, "package-list=s@");
+
 my @toplevelPkgs = @ARGV;
 
 
 my %packages;
 
+foreach my $list (@{$args{"package-list"}}) {
+    my ($packagesFile, $urlPrefix) = split(",", $list);
 
-# Parse the Packages file.
-open PACKAGES, "<$packagesFile" or die;
+    print STDERR "parsing $packagesFile\n";
 
-while (1) {
-    my $cdata = Dpkg::Control->new(type => CTRL_INFO_PKG);
-    last if not $cdata->parse(\*PACKAGES, $packagesFile);
-    die unless defined $cdata->{Package};
-    #print STDERR $cdata->{Package}, "\n";
-    $packages{$cdata->{Package}} = $cdata;
+    # Parse the Packages file.
+    open PACKAGES, "<$packagesFile" or die;
+
+    while (1) {
+        my $cdata = Dpkg::Control->new(type => CTRL_INFO_PKG);
+        last if not $cdata->parse(\*PACKAGES, $packagesFile);
+        die unless defined $cdata->{Package};
+        # print STDERR $cdata->{Package}, "\n";
+        $packages{$cdata->{Package}} = { cdata => $cdata, urlPrefix => $urlPrefix };
+    }
+
+    close PACKAGES;
 }
-
-close PACKAGES;
-
 
 # Flatten a Dpkg::Deps dependency value into a list of package names.
 sub getDeps {
@@ -50,7 +56,8 @@ sub getDeps {
 # virtual dependencies.
 my %provides;
 
-foreach my $cdata (sort {$a->{Package} cmp $b->{Package}} (values %packages)) {
+foreach my $package (sort {$a->{cdata}->{Package} cmp $b->{cdata}->{Package}} (values %packages)) {
+    my $cdata = $package->{cdata};
     if (defined $cdata->{Provides}) {
         my @provides = getDeps(Dpkg::Deps::deps_parse($cdata->{Provides}));
         foreach my $name (@provides) {
@@ -70,7 +77,6 @@ foreach my $cdata (sort {$a->{Package} cmp $b->{Package}} (values %packages)) {
     }
 }
 
-
 # Determine the closure of a package.
 my %donePkgs;
 my %depsUsed;
@@ -79,14 +85,14 @@ my @order = ();
 sub closePackage {
     my $pkgName = shift;
     print STDERR ">>> $pkgName\n";
-    my $cdata = $packages{$pkgName};
+    my $cdata = $packages{$pkgName}->{cdata};
 
     if (!defined $cdata) {
         die "unknown (virtual) package $pkgName"
             unless defined $provides{$pkgName};
         print STDERR "virtual $pkgName: using $provides{$pkgName}\n";
         $pkgName = $provides{$pkgName};
-        $cdata = $packages{$pkgName};
+        $cdata = $packages{$pkgName}->{cdata};
     }
 
     die "unknown package $pkgName" unless defined $cdata;
@@ -140,7 +146,9 @@ my %forward;
 my $newComponent = 1;
 foreach my $pkgName (@order) {
     $done{$pkgName} = 1;
-    my $cdata = $packages{$pkgName};
+    my $package = $packages{$pkgName};
+    my $cdata = $package->{cdata};
+    my $urlPrefix = $package->{urlPrefix};
     my @deps = @{$depsUsed{$pkgName}};
     foreach my $dep (@deps) {
         $dep = $provides{$dep} if defined $provides{$dep};
@@ -166,10 +174,6 @@ foreach my $pkgName (@order) {
         print "  ]\n\n";
         $newComponent = 1;
     }
-}
-
-foreach my $pkgName (@order) {
-    my $cdata = $packages{$pkgName};
 }
 
 print "]\n";

@@ -45,22 +45,29 @@ let
     '';
   };
 
-  packagesLists = [
-    (fetchurl {
-      url = "mirror://ubuntu/dists/noble/main/binary-amd64/Packages.xz";
-      sha256 = "sha256-KmoZnhAxpcJ5yzRmRtWUmT81scA91KgqqgMjmA3ZJFE=";
-    })
-    (fetchurl {
-      url = "mirror://ubuntu/dists/noble/universe/binary-amd64/Packages.xz";
-      sha256 = "sha256-upBX+huRQ4zIodJoCNAMhTif4QHQwUliVN+XI2QFWZo=";
-    })
+  packageLists = [
+    {
+      name = "noble-main";
+      packagesFile = (fetchurl {
+        url = "mirror://ubuntu/dists/noble/main/binary-amd64/Packages.xz";
+        sha256 = "sha256-KmoZnhAxpcJ5yzRmRtWUmT81scA91KgqqgMjmA3ZJFE=";
+      });
+      urlPrefix = "mirror://ubuntu";
+    }
+    {
+      name = "noble-universe";
+      packagesFile = (fetchurl {
+        url = "mirror://ubuntu/dists/noble/universe/binary-amd64/Packages.xz";
+        sha256 = "sha256-upBX+huRQ4zIodJoCNAMhTif4QHQwUliVN+XI2QFWZo=";
+      });
+      urlPrefix = "mirror://ubuntu";
+    }
   ];
-  urlPrefix = "mirror://ubuntu";
 
   # Packages that provide programs needed to install other packages
   debs-unpack = import (tools.debClosureGenerator {
     name = "debs-unpack";
-    inherit packagesLists urlPrefix;
+    inherit packageLists;
     packages = [
       "base-files"
       "dpkg"
@@ -76,7 +83,7 @@ let
 
   debs-install = import (tools.debClosureGenerator {
     name = "debs-install";
-    inherit packagesLists urlPrefix;
+    inherit packageLists;
     packages = [
       "base-passwd"
       "init-system-helpers"
