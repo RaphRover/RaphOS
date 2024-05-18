@@ -6,16 +6,17 @@
       system = "x86_64-linux";
       pkgs = (import nixpkgs) { inherit system; };
 
+      RaphaOS-image = pkgs.callPackage ./RaphaOS-image { };
+
       bootstrapper = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           (nixpkgs
             + "/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix")
           ./bootstrapper-config
+          { isoImage.squashfsCompression = "zstd"; }
         ];
       };
-
-      RaphaOS-image = pkgs.callPackage ./RaphaOS-image { };
 
     in {
       nixosConfigurations = { inherit bootstrapper; };
