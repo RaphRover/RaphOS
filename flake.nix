@@ -14,7 +14,10 @@
           (nixpkgs
             + "/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix")
           ./bootstrapper-config
-          { isoImage.squashfsCompression = "zstd"; }
+          {
+            isoImage.squashfsCompression = "zstd";
+            isoImage.storeContents = nixpkgs.lib.mkAfter [ RaphaOS-image ];
+          }
         ];
       };
 
