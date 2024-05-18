@@ -4,8 +4,7 @@ in {
   debClosureGenerator = { name, packageLists, packages }:
 
     runCommand "${name}.nix" {
-      nativeBuildInputs =
-        [ buildPackages.perl buildPackages.dpkg ];
+      nativeBuildInputs = [ buildPackages.perl buildPackages.dpkg ];
     } ''
       ${toString (lib.lists.forEach packageLists (list: ''
         echo "adding ${list.name}"
