@@ -150,10 +150,11 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
 
   debs = (lib.intersperse "|" debs-install);
 
-  preVM = vmTools.createEmptyImage {
-    inherit size;
-    fullName = name;
-  };
+  preVM = ''
+    mkdir -p $out
+    diskImage=$out/${name}.img
+    ${pkgs.qemu_kvm}/bin/qemu-img create -f raw $diskImage "${toString size}M"
+  '';
 
   buildCommand = ''
     ${scripts}/build.sh
