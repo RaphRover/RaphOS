@@ -1,4 +1,4 @@
-{ lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, ... }:
+{ lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, closureInfo, ... }:
 let
   name = "RaphaOS";
   size = 8192;
@@ -143,8 +143,12 @@ let
     ];
   }) { inherit fetchurl; };
 
+  debsClosure = closureInfo {
+    rootPaths = lib.lists.flatten (debs-unpack ++ debs-install);
+  };
+
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit name size;
+  inherit name size debsClosure;
 
   debs_unpack = debs-unpack;
 
