@@ -67,7 +67,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://packages.ros.org/ros2-testing/ubuntu/dists/noble/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-NHKJim+E8QpplzN+yYgAOyRjd5qMpAyXAZVf/zHOurw=";
+        sha256 = "sha256-S5tEJXzROSBTL0CKZhXDUID6qprd7/CiFZdYjmMTB7Q=";
       });
       urlPrefix = "http://packages.ros.org/ros2-testing/ubuntu";
     }
