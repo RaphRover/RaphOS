@@ -124,10 +124,10 @@ let
       "systemd" # init system
       "systemd-sysv" # provides systemd as /sbin/init
       "e2fsprogs" # initramfs wants fsck
-      "initramfs-tools" # hooks for generating an initramfs
       "zstd" # compress kernel using zstd
       "linux-image-generic" # kernel
       "grub-efi" # boot loader
+      "initramfs-tools" # hooks for generating an initramfs
 
       "ncurses-base" # terminfo to let applications talk to terminals better
       "openssh-server" # Remote login
