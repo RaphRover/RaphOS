@@ -13,7 +13,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - uses: nixbuild/nix-quick-install-action@v28
+    - uses: cachix/install-nix-action@v26
+      with:
+        extra_nix_config: |
+          experimental-features = nix-command flakes
     - run: |
         nix build -Lv
         nix fmt -- -c .
