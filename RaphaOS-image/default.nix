@@ -66,10 +66,10 @@ let
       name = "ros2";
       packagesFile = (fetchurl {
         url =
-          "http://packages.ros.org/ros2-testing/ubuntu/dists/noble/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-S5tEJXzROSBTL0CKZhXDUID6qprd7/CiFZdYjmMTB7Q=";
+          "http://snapshots.ros.org/jazzy/2024-05-23/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
+        sha256 = "sha256-4AQ+b9PMvFVh+IL4+4U0BcuQ88aUlquPHVrVyincV4g=";
       });
-      urlPrefix = "http://packages.ros.org/ros2-testing/ubuntu";
+      urlPrefix = "http://snapshots.ros.org/jazzy/2024-05-23/ubuntu";
     }
   ];
 
