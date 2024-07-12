@@ -1,6 +1,11 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, inputs, RaphaOS-image, ... }:
 
 {
+  imports = [
+    (inputs.nixpkgs
+      + "/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix")
+  ];
+
   networking.hostName = "bootstrapper";
 
   time.timeZone = "Europe/London";
@@ -9,6 +14,8 @@
     isoBaseName = "RaphaOS-Bootstrapper";
     makeBiosBootable = false;
     makeEfiBootable = true;
+    squashfsCompression = "zstd";
+    storeContents = lib.mkAfter [ RaphaOS-image ];
   };
 
   boot.loader.grub.memtest86.enable = lib.mkForce false;
