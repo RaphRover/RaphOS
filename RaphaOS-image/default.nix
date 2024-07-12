@@ -45,7 +45,8 @@ let
     '';
   };
 
-  packageLists = [
+  packageLists = let noble-updates-stamp = "20240712T160000Z";
+  in [
     {
       name = "noble-main";
       packagesFile = (fetchurl {
@@ -63,13 +64,31 @@ let
       urlPrefix = "mirror://ubuntu";
     }
     {
+      name = "noble-updates-main";
+      packagesFile = (fetchurl {
+        url =
+          "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
+        sha256 = "sha256-r+aT6l2JLPjYUY2aibMnK+1u/+GiXxdkBe5pG4T/wbw=";
+      });
+      urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
+    }
+    {
+      name = "noble-updates-universe";
+      packagesFile = (fetchurl {
+        url =
+          "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
+        sha256 = "sha256-M//woptAt/o1bPtdtetWICD2gH+ZVSHGT1stOgZoAEU=";
+      });
+      urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
+    }
+    {
       name = "ros2";
       packagesFile = (fetchurl {
         url =
-          "http://snapshots.ros.org/jazzy/2024-05-23/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
-        sha256 = "sha256-4AQ+b9PMvFVh+IL4+4U0BcuQ88aUlquPHVrVyincV4g=";
+          "http://snapshots.ros.org/jazzy/2024-07-05/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
+        sha256 = "sha256-R3SqO8YCwnDxEcTBh1xJHV9hnUjNcPuJ8OK1N/F6bOU=";
       });
-      urlPrefix = "http://snapshots.ros.org/jazzy/2024-05-23/ubuntu";
+      urlPrefix = "http://snapshots.ros.org/jazzy/2024-07-05/ubuntu";
     }
   ];
 
