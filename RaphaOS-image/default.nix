@@ -45,7 +45,10 @@ let
     '';
   };
 
-  packageLists = let noble-updates-stamp = "20240712T160000Z";
+  packageLists = let
+    noble-updates-stamp = "20240712T160000Z";
+    ros2-stamp = "2024-07-05";
+    fictionlab-stamp = "2024-07-17";
   in [
     {
       name = "noble-main";
@@ -85,10 +88,19 @@ let
       name = "ros2";
       packagesFile = (fetchurl {
         url =
-          "http://snapshots.ros.org/jazzy/2024-07-05/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
+          "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
         sha256 = "sha256-R3SqO8YCwnDxEcTBh1xJHV9hnUjNcPuJ8OK1N/F6bOU=";
       });
-      urlPrefix = "http://snapshots.ros.org/jazzy/2024-07-05/ubuntu";
+      urlPrefix = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu";
+    }
+    {
+      name = "fictionlab";
+      packagesFile = (fetchurl {
+        url =
+          "http://files.fictionlab.pl/repo/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
+        sha256 = "sha256-trjRDrCTOismv6Z1+SrEwwF751/fhrTMkmDk30Kbjew=";
+      });
+      urlPrefix = "http://files.fictionlab.pl/repo";
     }
   ];
 
@@ -159,6 +171,7 @@ let
       "systemd-timesyncd"
 
       "ros-jazzy-ros-base"
+      "ros-jazzy-micro-ros-agent"
     ];
   }) { inherit fetchurl; };
 
