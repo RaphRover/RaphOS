@@ -48,7 +48,7 @@ let
   packageLists = let
     noble-updates-stamp = "20240712T160000Z";
     ros2-stamp = "2024-07-05";
-    fictionlab-stamp = "2024-07-17";
+    fictionlab-stamp = "2024-07-22";
   in [
     {
       name = "noble-main";
@@ -98,7 +98,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://files.fictionlab.pl/repo/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-trjRDrCTOismv6Z1+SrEwwF751/fhrTMkmDk30Kbjew=";
+        sha256 = "sha256-6Xp5LlgN/V7sownWX0a5ePgnknEqjlA45684hms8pEo=";
       });
       urlPrefix = "http://files.fictionlab.pl/repo";
     }
@@ -172,6 +172,7 @@ let
 
       "ros-jazzy-ros-base"
       "ros-jazzy-micro-ros-agent"
+      "ros-jazzy-rapha-robot"
     ];
   }) { inherit fetchurl; };
 
