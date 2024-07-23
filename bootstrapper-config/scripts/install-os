@@ -1,5 +1,48 @@
 #!/usr/bin/env -S bash -e
 
-echo "--> Flashing OS image: ${OS_IMG_FILE}"
+echo "--> Started OS installation procedure"
 
-sleep 30
+FORCE=false
+DISK_PATH=/dev/mmcblk0
+
+while getopts ":fd:" options; do
+	case "${options}" in
+		f)
+			FORCE=true
+			;;
+	    d)
+			DISK_PATH=${OPTARG}
+			;;
+		:)
+			echo "Error: -${OPTARG} requires an argument."
+			exit 1
+			;;
+		?)
+			echo "Error: Invalid option: -${OPTARG}."
+			exit 1
+			;;
+	esac
+done
+
+BASEBOARD_MANUFACTURER=$(dmidecode -t 2  | grep "Manufacturer" | awk '{print $2}')
+BASEBOARD_PRODUCT_NAME=$(dmidecode -t 2  | grep "Product Name" | awk '{print $3}')
+
+if [[ $BASEBOARD_MANUFACTURER != "AAEON" || $BASEBOARD_PRODUCT_NAME != "UP-ADLN01" ]]; then
+    echo "Error: Unrecognized hardware (Manufacturer: ${BASEBOARD_MANUFACTURER}, Product Name: ${BASEBOARD_PRODUCT_NAME})"
+    if [[ $FORCE = false ]]; then
+        exit 1
+    else
+        echo "--> Force option enabled, continuing installation..."
+    fi
+fi
+
+if [[ ! -b $DISK_PATH ]]; then
+    echo "Error: The disk path ${DISK_PATH} does not exist or is not a block device"
+    exit 1
+fi
+
+echo "--> Will install ${OS_IMG_FILE} into ${DISK_PATH} in 5 seconds. Type Ctrl+C to interrupt."
+sleep 5
+
+echo "--> Writing image into disk..."
+dd if=$OS_IMG_FILE of=${DISK_PATH} bs=1M status=progress
