@@ -1,0 +1,5 @@
+#!/usr/bin/env -S bash -e
+
+echo "--> Flashing OS image: ${OS_IMG_FILE}"
+
+sleep 30

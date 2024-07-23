@@ -15,7 +15,6 @@
     makeBiosBootable = false;
     makeEfiBootable = true;
     squashfsCompression = "zstd";
-    storeContents = lib.mkAfter [ RaphaOS-image ];
   };
 
   boot.loader.grub.memtest86.enable = lib.mkForce false;
@@ -29,10 +28,41 @@
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  # environment.systemPackages = with pkgs; [
-  #   vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  #   wget
-  # ];
+  environment.systemPackages = with pkgs;
+    [
+      (stdenv.mkDerivation {
+        name = "bootstrapper-scripts";
+        src = ./scripts;
+
+        nativeBuildInputs = [ bash makeWrapper ];
+
+        buildPhase = ''
+          mkdir -p $out/bin
+          install -t $out/bin ./install-os
+        '';
+
+        postFixup = ''
+          wrapProgram $out/bin/install-os \
+            --set PATH ${
+              lib.makeBinPath [ coreutils dmidecode ]
+            } --set OS_IMG_FILE "${RaphaOS-image}/RaphaOS.img"
+        '';
+      })
+    ];
+
+  users.users.nixos.shell = pkgs.stdenv.mkDerivation {
+    name = "bootstrapper-sh";
+    src = ./scripts;
+
+    nativeBuildInputs = [ pkgs.bash ];
+
+    buildPhase = ''
+      mkdir -p $out/bin
+      install -t $out/bin ./bootstrapper-sh
+    '';
+
+    passthru = { shellPath = "/bin/bootstrapper-sh"; };
+  };
 
   system.stateVersion = "24.05";
 }

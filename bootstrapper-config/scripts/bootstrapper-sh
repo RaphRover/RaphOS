@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+trap 'echo "OS Installation interrupted!"' int
+
+sudo install-os | tee install.log
+
+# Fallback to normal shell if installation fails
+trap - int
+bash
