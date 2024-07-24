@@ -63,7 +63,7 @@ for component in $debs; do
 done
 
 # Install configuration files
-cp -vr "${FILES_DIR}/etc" /mnt/
+cp -vr "${FILES_DIR}/"* /mnt/
 
 # Symlink resolv.conf to systemd-resolved
 ln -vsnf /lib/systemd/resolv.conf /mnt/etc/resolv.conf
