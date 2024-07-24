@@ -79,8 +79,13 @@ udevadm trigger
 udevadm settle
 
 my_chroot /mnt /bin/bash -exuo pipefail <<CHROOT
-# Install the boot loader to the EFI System Partition
+# Create initramfs
+update-initramfs -c -k all
+
+# Update GRUB configuration
 update-grub
+
+# Install the GRUB bootloader to the EFI System Partition
 grub-install --target x86_64-efi
 
 # Enable SSH server
