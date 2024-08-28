@@ -187,7 +187,6 @@ let
 
       "ros-jazzy-ros-base"
       "ros-jazzy-micro-ros-agent"
-      "ros-jazzy-rapha-robot"
     ];
   }) { inherit fetchurl; };
 
