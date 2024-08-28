@@ -19,12 +19,11 @@ let
     src = ./files;
     phases = [ "unpackPhase" "installPhase" ];
     installPhase = ''
-      mkdir -p $out
-      cp -vr $src/* $out
-
       mkdir -p $out/usr/share/keyrings
       cp -v ${ros-archive-keyring} $out/usr/share/keyrings/ros-archive-keyring.gpg
       cp -v ${fictionlab-archive-keyring} $out/usr/share/keyrings/fictionlab-archive-keyring.gpg
+
+      cp -vr $src/* $out
     '';
   };
 
