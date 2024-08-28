@@ -164,6 +164,7 @@ let
       "less"
       "nano"
       "vim"
+      "sudo"
 
       "systemd" # init system
       "systemd-sysv" # provides systemd as /sbin/init
