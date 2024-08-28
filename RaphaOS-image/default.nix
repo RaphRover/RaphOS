@@ -168,6 +168,7 @@ let
 
       "systemd" # init system
       "systemd-sysv" # provides systemd as /sbin/init
+      "libpam-systemd" # makes systemd user sevices work
       "e2fsprogs" # initramfs wants fsck
       "zstd" # compress kernel using zstd
       "linux-image-generic" # kernel
