@@ -1,5 +1,9 @@
 #!/bin/sh -e
 
+# Configuration
+FIRST_USER_NAME=ibis
+FIRST_USER_PASS=ibis
+
 my_chroot() {
     DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/bin:/bin:/usr/sbin:/sbin \
@@ -62,6 +66,17 @@ for component in $debs; do
     my_chroot /mnt dpkg --install $debs < /dev/null
 done
 
+# Create default user
+my_chroot /mnt /bin/bash -exuo pipefail <<CHROOT
+if ! id -u ${FIRST_USER_NAME} >/dev/null 2>&1; then
+	adduser --disabled-password --gecos "" ${FIRST_USER_NAME}
+fi
+echo "${FIRST_USER_NAME}:${FIRST_USER_PASS}" | chpasswd
+for GRP in adm dialout audio sudo video plugdev input; do
+    adduser $FIRST_USER_NAME "\${GRP}"
+done
+CHROOT
+
 # Install configuration files
 cp -vr "${FILES_DIR}/"* /mnt/
 
@@ -93,10 +108,6 @@ systemctl enable ssh ssh-generate-host-keys
 
 # Enable Networkd
 systemctl enable systemd-networkd
-
-# Set a password so we can log into the booted system
-echo root:root | chpasswd
-
 CHROOT
 
 umount /mnt/inst${NIX_STORE_DIR}
