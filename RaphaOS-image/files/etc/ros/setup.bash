@@ -1,4 +1,5 @@
-source /opt/ros/jazzy/setup.bash
+# source /opt/ros/jazzy/setup.bash
+source /home/ibis/ros_ws/install/setup.bash
 
 ### Robot Configuration
 

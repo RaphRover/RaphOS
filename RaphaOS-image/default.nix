@@ -184,8 +184,18 @@ let
       "systemd-resolved"
       "systemd-timesyncd"
 
+      "ros-dev-tools"
+      "python3-colcon-common-extensions"
       "ros-jazzy-ros-base"
       "ros-jazzy-micro-ros-agent"
+
+      # ibis_ros dependencies
+      "ros-jazzy-robot-state-publisher"
+      "ros-jazzy-rosbridge-server"
+      "ros-jazzy-cv-bridge"
+      "ros-jazzy-depthai"
+      "ros-jazzy-depthai-bridge"
+      "ros-jazzy-generate-parameter-library"
     ];
   }) { inherit fetchurl; };
 
@@ -196,9 +206,16 @@ let
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
   inherit name size debsClosure;
 
+  memSize = 4096;
+
   debs_unpack = debs-unpack;
 
   debs = (lib.intersperse "|" debs-install);
+
+  ibis_ros_src = builtins.fetchGit {
+    url = "git@github.com:fictionlab/ibis_ros.git";
+    rev = "e3c1fd673fcfd142279af4574037dae5cd9a62fe";
+  };
 
   preVM = ''
     mkdir -p $out

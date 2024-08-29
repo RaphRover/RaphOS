@@ -30,6 +30,7 @@ mkdir -p /mnt/{proc,dev,sys,boot/efi}
 mount -t vfat "$DISK"1 /mnt/boot/efi
 mount -o bind /proc /mnt/proc
 mount -o bind /dev /mnt/dev
+mount -o bind /dev/pts /mnt/dev/pts
 mount -t sysfs sysfs /mnt/sys
 
 # Make the Nix store available in /mnt, because that's where the .debs live.
@@ -75,6 +76,15 @@ echo "${FIRST_USER_NAME}:${FIRST_USER_PASS}" | chpasswd
 for GRP in adm dialout audio sudo video plugdev input; do
     adduser $FIRST_USER_NAME "\${GRP}"
 done
+
+# Build IBIS packages
+su - ${FIRST_USER_NAME}
+cd /home/ibis
+mkdir -p ros_ws/src
+cp -vr /inst${ibis_ros_src} ros_ws/src
+cd ros_ws
+source /opt/ros/jazzy/setup.bash
+colcon build --symlink-install --event-handlers desktop_notification- status- terminal_title-
 CHROOT
 
 # Install configuration files
@@ -114,5 +124,6 @@ umount /mnt/inst${NIX_STORE_DIR}
 umount /mnt/boot/efi
 umount /mnt/sys
 umount /mnt/proc
+umount /mnt/dev/pts
 umount /mnt/dev
 umount /mnt
