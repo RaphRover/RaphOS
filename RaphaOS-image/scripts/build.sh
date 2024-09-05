@@ -3,6 +3,7 @@
 # Configuration
 FIRST_USER_NAME=ibis
 FIRST_USER_PASS=ibis
+TARGET_HOSTNAME=ibis
 
 my_chroot() {
     DEBIAN_FRONTEND=noninteractive \
@@ -67,8 +68,24 @@ for component in $debs; do
     my_chroot /mnt dpkg --install $debs < /dev/null
 done
 
-# Create default user
+# Install configuration files
+cp -vr --no-preserve=mode "${FILES_DIR}/"* /mnt/
+
+# Fix file permissions
+chmod +x /mnt/usr/lib/ros/*
+
+# Symlink resolv.conf to systemd-resolved
+ln -vsnf /lib/systemd/resolv.conf /mnt/etc/resolv.conf
+
+# Remove SSH host keys
+rm /mnt/etc/ssh/ssh_host_*
+
+# Set hostname
+echo "${TARGET_HOSTNAME}" > "/mnt/etc/hostname"
+printf "\n127.0.1.1 ${TARGET_HOSTNAME}\n" >> "/mnt/etc/hosts"
+
 my_chroot /mnt /bin/bash -exuo pipefail <<CHROOT
+# Create default user
 if ! id -u ${FIRST_USER_NAME} >/dev/null 2>&1; then
 	adduser --disabled-password --gecos "" ${FIRST_USER_NAME}
 fi
@@ -81,20 +98,23 @@ done
 su - ${FIRST_USER_NAME}
 cd /home/ibis
 mkdir -p ros_ws/src
-cp -vr /inst${ibis_ros_src} ros_ws/src
+cp -vr /inst${ibis_ros_src}/. ros_ws/src/ibis_ros
 cd ros_ws
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install --event-handlers desktop_notification- status- terminal_title-
+
+# Enable user services
+systemctl --user enable ros-nodes
+systemctl --user enable uros-agent
+systemctl --user enable ros.target
 CHROOT
 
-# Install configuration files
-cp -vr "${FILES_DIR}/"* /mnt/
+# Enable lingering for default user
+mkdir -p -m 755 "/mnt/var/lib/systemd/linger"
+touch "/mnt/var/lib/systemd/linger/${FIRST_USER_NAME}"
 
-# Symlink resolv.conf to systemd-resolved
-ln -vsnf /lib/systemd/resolv.conf /mnt/etc/resolv.conf
-
-# Remove SSH host keys
-rm /mnt/etc/ssh/ssh_host_*
+# Automatically source our setup when user logs in to bash shell
+echo -e "\nsource /etc/ros/setup.bash" >> "/mnt/home/${FIRST_USER_NAME}/.bashrc"
 
 # update-grub needs udev to detect the filesystem UUID -- without,
 # we'll get root=/dev/vda2 on the cmdline which will only work in
