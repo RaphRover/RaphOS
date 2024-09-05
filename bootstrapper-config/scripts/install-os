@@ -46,3 +46,10 @@ sleep 5
 
 echo "--> Writing image into disk..."
 dd if=$OS_IMG_FILE of=${DISK_PATH} bs=1M status=progress
+sync
+
+echo "--> Disk image successfully written. Unplug the thumbstick drive to reboot or type Ctrl+C to open interactive shell."
+inotifywait -e DELETE_SELF /dev/root > /dev/null
+
+# Perform a hard reboot.
+echo b > /proc/sysrq-trigger
