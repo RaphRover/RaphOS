@@ -65,7 +65,7 @@ for component in $debs; do
         debs="$debs /inst$i";
     done
 
-    my_chroot /mnt dpkg --install $debs < /dev/null
+    my_chroot /mnt dpkg --install --force-conflicts --force-overwrite $debs < /dev/null
 done
 
 # Install configuration files
