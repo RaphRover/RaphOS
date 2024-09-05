@@ -13,7 +13,7 @@
         link_prefix:=$(var tf_frame_prefix)')" />
   </node>
 
-  <include file="$(find-pkg-share leo_bringup)/launch/leo_bringup.launch.xml">
+  <include file="$(find-pkg-share ibis_bringup)/launch/ibis_bringup.launch.xml">
     <arg name="spawn_state_publisher" value="false" />
     <arg name="tf_frame_prefix" value="$(var tf_frame_prefix)" />
   </include>
