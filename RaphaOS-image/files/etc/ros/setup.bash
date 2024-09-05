@@ -17,7 +17,7 @@ LAUNCH_FILE="/etc/ros/robot.launch.xml"
 LAUNCH_ARGS=""
 
 # Arguments passed to Micro-ROS agent
-UROS_AGENT_ARGS="serial -D /dev/serial0 -b 460800"
+UROS_AGENT_ARGS="upd4 -d -p 8888"
 
 
 ### ROS Environment Variables
