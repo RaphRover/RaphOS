@@ -196,6 +196,11 @@ let
       "ros-jazzy-depthai"
       "ros-jazzy-depthai-bridge"
       "ros-jazzy-generate-parameter-library"
+      "ros-jazzy-pcl-ros"
+      "ros-jazzy-pcl-conversions"
+      "libpcl-dev"
+      "libapr1-dev"
+      "libaprutil1-dev"
     ];
   }) { inherit fetchurl; };
 
