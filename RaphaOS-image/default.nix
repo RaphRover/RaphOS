@@ -213,8 +213,9 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
   debs = (lib.intersperse "|" debs-install);
 
   ibis_ros_src = builtins.fetchGit {
-    url = "git@github.com:fictionlab/ibis_ros.git";
-    rev = "e3c1fd673fcfd142279af4574037dae5cd9a62fe";
+    url = "git@github.com:fictionlab-ibis/ibis_ros.git";
+    rev = "7ca95f49ea50e8cfcc9a059eaa4ab2473e75d5ea";
+    submodules = true;
   };
 
   preVM = ''
