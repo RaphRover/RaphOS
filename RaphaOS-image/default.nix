@@ -164,7 +164,12 @@ let
       "nano"
       "vim"
       "sudo"
+      "dbus" # IPC used by various applications
+      "ncurses-base" # terminfo to let applications talk to terminals better
+      "bash-completion"
+      "htop"
 
+      # Boot stuff
       "systemd" # init system
       "systemd-sysv" # provides systemd as /sbin/init
       "libpam-systemd" # makes systemd user sevices work
@@ -173,19 +178,21 @@ let
       "linux-image-generic" # kernel
       "grub-efi" # boot loader
       "initramfs-tools" # hooks for generating an initramfs
-
-      "ncurses-base" # terminfo to let applications talk to terminals better
+       
+      # Networking stuff
+      "netplan.io" # network configuration utility
+      "iproute2" # ip cli utilities
+      "iputils-ping" # ping utility
+      "systemd-resolved" # DNS resolver
+      "systemd-timesyncd" # SNTP client
+      "avahi-daemon" # mDNS support
       "openssh-server" # Remote login
-      "dbus" # networkctl
 
-      "netplan.io"
-      "iproute2"
-      "iputils-ping"
-      "systemd-resolved"
-      "systemd-timesyncd"
-
+      # ROS build tools
       "ros-dev-tools"
       "python3-colcon-common-extensions"
+      
+      # ROS base packages
       "ros-jazzy-ros-base"
       "ros-jazzy-micro-ros-agent"
 
