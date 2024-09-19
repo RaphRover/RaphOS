@@ -197,6 +197,7 @@ let
       "ros-jazzy-micro-ros-agent"
 
       # ibis_ros dependencies
+      "ros-jazzy-async-web-server-cpp"
       "ros-jazzy-robot-state-publisher"
       "ros-jazzy-rosbridge-server"
       "ros-jazzy-cv-bridge"
@@ -208,6 +209,7 @@ let
       "libpcl-dev"
       "libapr1-dev"
       "libaprutil1-dev"
+      "ffmpeg"
     ];
   }) { inherit fetchurl; };
 
