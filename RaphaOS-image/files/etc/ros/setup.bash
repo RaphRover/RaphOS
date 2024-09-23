@@ -1,5 +1,10 @@
+# Source the ROS workspace
 # source /opt/ros/jazzy/setup.bash
 source /home/ibis/ros_ws/install/setup.bash
+
+# Source aliases for systemd user services
+source /etc/ros/aliases
+
 
 ### Robot Configuration
 
