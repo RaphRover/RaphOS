@@ -240,5 +240,7 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
 
   buildCommand = ''
     ${scripts}/build.sh
+    mkdir -p "$out/nix-support"
+    echo ${toString [ debs_unpack debs_install ]} > $out/nix-support/deb-inputs
   '';
 })
