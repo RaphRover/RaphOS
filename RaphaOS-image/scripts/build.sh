@@ -47,16 +47,20 @@ ln -s /usr/lib64 /mnt/lib64
 
 echo "Unpacking Debs..."
 
-for deb in ${debs_unpack}; do
+DEBS_UNPACK_FILES=$(cat ${debs_unpack})
+
+for deb in ${DEBS_UNPACK_FILES}; do
     echo "$deb..."
     dpkg-deb --extract "$deb" /mnt
 done
 
 echo "Installing Debs..."
 
+DEBS_INSTALL_FILES=$(cat ${debs_install})
+
 oldIFS="$IFS"
 IFS="|"
-for component in $debs; do
+for component in ${DEBS_INSTALL_FILES}; do
     IFS="$oldIFS"
     echo
     echo ">>> INSTALLING COMPONENT: $component"

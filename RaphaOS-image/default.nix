@@ -117,8 +117,8 @@ let
   ];
 
   # Packages that provide programs needed to install other packages
-  debs-unpack = import (tools.debClosureGenerator {
-    name = "debs-unpack";
+  debs-unpack-closure = import (tools.debClosureGenerator {
+    name = "debs-unpack-closure";
     inherit packageLists;
     packages = [
       "base-files"
@@ -133,8 +133,12 @@ let
     ];
   }) { inherit fetchurl; };
 
-  debs-install = import (tools.debClosureGenerator {
-    name = "debs-install";
+  debs_unpack = pkgs.runCommand "debs-unpack" { } ''
+    echo "${toString debs-unpack-closure}" > $out
+  '';
+
+  debs-install-closure = import (tools.debClosureGenerator {
+    name = "debs-install-closure";
     inherit packageLists;
     packages = [
       "base-passwd"
@@ -178,7 +182,7 @@ let
       "linux-image-generic" # kernel
       "grub-efi" # boot loader
       "initramfs-tools" # hooks for generating an initramfs
-       
+
       # Networking stuff
       "netplan.io" # network configuration utility
       "iproute2" # ip cli utilities
@@ -191,7 +195,7 @@ let
       # ROS build tools
       "ros-dev-tools"
       "python3-colcon-common-extensions"
-      
+
       # ROS base packages
       "ros-jazzy-ros-base"
       "ros-jazzy-micro-ros-agent"
@@ -213,18 +217,14 @@ let
     ];
   }) { inherit fetchurl; };
 
-  debsClosure = closureInfo {
-    rootPaths = lib.lists.flatten (debs-unpack ++ debs-install);
-  };
+  debs_install = pkgs.runCommand "debs-install" { } ''
+    echo "${toString (lib.intersperse "|" debs-install-closure)}" > $out
+  '';
 
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit name size debsClosure;
+  inherit name size debs_unpack debs_install;
 
   memSize = 4096;
-
-  debs_unpack = debs-unpack;
-
-  debs = (lib.intersperse "|" debs-install);
 
   ibis_ros_src = builtins.fetchGit {
     url = "git@github.com:fictionlab-ibis/ibis_ros.git";
