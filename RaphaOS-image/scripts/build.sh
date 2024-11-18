@@ -74,6 +74,7 @@ done
 
 # Install configuration files
 cp -vr --no-preserve=mode "${FILES_DIR}/"* /mnt/
+cp -v /mnt/usr/share/systemd/tmp.mount /mnt/etc/systemd/system/
 
 # Fix file permissions
 chmod +x /mnt/usr/lib/ros/*
@@ -142,6 +143,9 @@ systemctl enable ssh ssh-generate-host-keys
 
 # Enable Networkd
 systemctl enable systemd-networkd
+
+# Enable tmpfs on /tmp
+systemctl enable tmp.mount
 CHROOT
 
 umount /mnt/inst${NIX_STORE_DIR}
