@@ -1,4 +1,4 @@
-{ lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, closureInfo, ... }:
+{ lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, ... }:
 let
   name = "RaphaOS";
   size = 8192;
