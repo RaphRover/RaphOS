@@ -1,0 +1,15 @@
+[Unit]
+Description=Mount External Disk at /home/ibis/external_disk_mountpoint
+Requires=local-fs.target
+After=local-fs.target
+BindsTo=dev-sda1.device
+Before=umount.target
+
+[Mount]
+What=/dev/sda1
+Where=/home/ibis/external_disk_mountpoint
+Type=exfat
+Options=uid=ibis,gid=ibis,umask=0022
+
+[Install]
+WantedBy=multi-user.target
