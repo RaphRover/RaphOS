@@ -111,7 +111,6 @@ colcon build --symlink-install --event-handlers desktop_notification- status- te
 # Enable user services
 systemctl --user enable ros-nodes
 systemctl --user enable uros-agent
-systemctl --user enable ros.target
 CHROOT
 
 # Enable lingering for default user

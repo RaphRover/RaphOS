@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+[ "$IFACE" != "enp1s0" ] && exit 0
+
+logger -t "networkd-dispatcher" "Interface $IFACE is off, stopping ros services for $USERNAME."
+
+USERNAME="ibis" 
+export XDG_RUNTIME_DIR="/run/user/$(id -u $USERNAME)"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+sudo -u "$USERNAME" XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS systemctl --user stop ros.target

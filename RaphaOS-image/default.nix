@@ -191,6 +191,7 @@ let
       "systemd-timesyncd" # SNTP client
       "avahi-daemon" # mDNS support
       "openssh-server" # Remote login
+      "networkd-dispatcher" # Networkd hooks
 
       # ROS build tools
       "ros-dev-tools"
