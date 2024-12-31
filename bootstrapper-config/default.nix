@@ -44,7 +44,12 @@
         postFixup = ''
           wrapProgram $out/bin/install-os \
             --set PATH ${
-              lib.makeBinPath [ coreutils dmidecode gawk gnugrep inotify-tools ]
+              lib.makeBinPath [
+                coreutils
+                dmidecode
+                inotify-tools
+                python312Packages.python
+              ]
             } --set OS_IMG_FILE "${RaphaOS-image}/RaphaOS.img"
         '';
       })

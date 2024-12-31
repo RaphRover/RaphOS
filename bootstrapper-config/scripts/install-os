@@ -1,55 +1,56 @@
-#!/usr/bin/env -S bash -e
+#!/usr/bin/env python3
 
-echo "--> Started OS installation procedure"
+import argparse
+import os
+import subprocess
+import time
+from pathlib import Path
 
-FORCE=false
-DISK_PATH=/dev/mmcblk0
+print("--> Started OS installation procedure")
 
-while getopts ":fd:" options; do
-	case "${options}" in
-		f)
-			FORCE=true
-			;;
-	    d)
-			DISK_PATH=${OPTARG}
-			;;
-		:)
-			echo "Error: -${OPTARG} requires an argument."
-			exit 1
-			;;
-		?)
-			echo "Error: Invalid option: -${OPTARG}."
-			exit 1
-			;;
-	esac
-done
+parser = argparse.ArgumentParser(description='OS installation script')
+parser.add_argument('-f', '--force', action='store_true', help='Force installation')
+parser.add_argument('-d', '--disk', default='/dev/mmcblk0', help='Disk path')
+args = parser.parse_args()
 
-BASEBOARD_MANUFACTURER=$(dmidecode -t 2  | grep "Manufacturer" | awk '{print $2}')
-BASEBOARD_PRODUCT_NAME=$(dmidecode -t 2  | grep "Product Name" | awk '{print $3}')
+FORCE = args.force
+DISK_PATH = Path(args.disk)
 
-if [[ $BASEBOARD_MANUFACTURER != "AAEON" || $BASEBOARD_PRODUCT_NAME != "UP-ADLN01" ]]; then
-    echo "Error: Unrecognized hardware (Manufacturer: ${BASEBOARD_MANUFACTURER}, Product Name: ${BASEBOARD_PRODUCT_NAME})"
-    if [[ $FORCE = false ]]; then
-        exit 1
-    else
-        echo "--> Force option enabled, continuing installation..."
-    fi
-fi
+assert "OS_IMG_FILE" in os.environ, "Error: OS_IMG_FILE environment variable is not set"
 
-if [[ ! -b $DISK_PATH ]]; then
-    echo "Error: The disk path ${DISK_PATH} does not exist or is not a block device"
-    exit 1
-fi
+IMG_PATH = Path(os.getenv('OS_IMG_FILE'))
 
-echo "--> Will install ${OS_IMG_FILE} into ${DISK_PATH} in 5 seconds. Type Ctrl+C to interrupt."
-sleep 5
+def get_dmidecode_info(type_id, field):
+    result = subprocess.run(['dmidecode', '-t', str(type_id)], capture_output=True, text=True)
+    for line in result.stdout.splitlines():
+        if field in line:
+            return line.split(':')[1].strip()
+    return None
 
-echo "--> Writing image into disk..."
-dd if=$OS_IMG_FILE of=${DISK_PATH} bs=1M status=progress
-sync
+BASEBOARD_MANUFACTURER = get_dmidecode_info(2, "Manufacturer")
+BASEBOARD_PRODUCT_NAME = get_dmidecode_info(2, "Product Name")
 
-echo "--> Disk image successfully written. Unplug the thumbstick drive to reboot or type Ctrl+C to open interactive shell."
-inotifywait -e DELETE_SELF /dev/root > /dev/null
+if BASEBOARD_MANUFACTURER != "AAEON" or BASEBOARD_PRODUCT_NAME != "UP-ADLN01":
+    print(f"Error: Unrecognized hardware (Manufacturer: {BASEBOARD_MANUFACTURER}, Product Name: {BASEBOARD_PRODUCT_NAME})")
+    if not FORCE:
+        exit(1)
+    else:
+        print("--> Force option enabled, continuing installation...")
+
+if not DISK_PATH.exists() or not DISK_PATH.is_block_device():
+    print(f"Error: The disk path {DISK_PATH} does not exist or is not a block device")
+    exit(1)
+
+print(f"--> Will install {IMG_PATH} into {DISK_PATH} in 5 seconds. Type Ctrl+C to interrupt.")
+time.sleep(5)
+
+print("--> Writing image into disk...")
+subprocess.run(['dd', f'if={IMG_PATH}', f'of={DISK_PATH}', 'bs=8K', 'status=progress'])
+os.sync()
+
+print("--> Disk image successfully written. Unplug the thumbstick drive to reboot or type Ctrl+C to open interactive shell.")
+subprocess.run(['inotifywait', '-e', 'DELETE_SELF', '/dev/root'])
 
 # Perform a hard reboot.
-echo b > /proc/sysrq-trigger
+with open('/proc/sysrq-trigger', 'w') as f:
+    f.write('b')
