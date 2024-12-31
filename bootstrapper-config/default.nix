@@ -47,8 +47,11 @@
               lib.makeBinPath [
                 coreutils
                 dmidecode
+                e2fsprogs
+                gptfdisk
                 inotify-tools
-                python312Packages.python
+                (python312Packages.python.withPackages (ps: [ ps.pyparted ]))
+                util-linuxMinimal
               ]
             } --set OS_IMG_FILE "${RaphaOS-image}/RaphaOS.img"
         '';

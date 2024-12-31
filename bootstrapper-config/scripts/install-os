@@ -6,6 +6,8 @@ import subprocess
 import time
 from pathlib import Path
 
+import parted
+
 print("--> Started OS installation procedure")
 
 parser = argparse.ArgumentParser(description='OS installation script')
@@ -47,6 +49,34 @@ time.sleep(5)
 print("--> Writing image into disk...")
 subprocess.run(['dd', f'if={IMG_PATH}', f'of={DISK_PATH}', 'bs=8K', 'status=progress'])
 os.sync()
+
+def resize_root_partition():
+    # Move backup GPT header to the end of the disk
+    subprocess.run(['sgdisk', '--move-second-header', DISK_PATH])
+
+    device = parted.getDevice(str(DISK_PATH))
+    disk = parted.Disk(device)
+
+    # Find the root partition (assuming it's the second partition)
+    root_partition = None
+    for partition in disk.partitions:
+        if partition.number == 2:
+            root_partition = partition
+            break
+
+    if not root_partition:
+        print("Error: Could not find the root partition")
+        exit(1)
+
+    # Resize the partition to use the maximum available space
+    disk.maximizePartition(root_partition, device.getConstraint())
+    disk.commit()
+
+    # Resize the filesystem
+    subprocess.run(['resize2fs', "-f", f'{root_partition.path}'])
+
+print("--> Resizing root partition...")
+resize_root_partition()
 
 print("--> Disk image successfully written. Unplug the thumbstick drive to reboot or type Ctrl+C to open interactive shell.")
 subprocess.run(['inotifywait', '-e', 'DELETE_SELF', '/dev/root'])
