@@ -58,8 +58,8 @@ let
   };
 
   packageLists = let
-    noble-updates-stamp = "20241117T120000Z";
-    ros2-stamp = "2024-10-18";
+    noble-updates-stamp = "20250101T120000Z";
+    ros2-stamp = "2024-11-21";
     fictionlab-stamp = "2024-07-22";
   in [
     {
