@@ -106,7 +106,7 @@ mkdir -p ros_ws/src
 cp -vr /inst${ibis_ros_src}/. ros_ws/src/ibis_ros
 cd ros_ws
 source /opt/ros/jazzy/setup.bash
-colcon build --symlink-install --event-handlers desktop_notification- status- terminal_title-
+colcon build --symlink-install --event-handlers desktop_notification- status- terminal_title- --cmake-args -DBUILD_TESTING=OFF
 
 # Enable user services
 systemctl --user enable ros-nodes
