@@ -233,6 +233,11 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
     submodules = true;
   };
 
+  ibis_ui_src = builtins.fetchGit {
+    url = "git@github.com:fictionlab-ibis/ibis_ui.git";
+    rev = "07c25ebfe6f8b4c03208daa373328660abc44c39";
+  };
+
   preVM = ''
     mkdir -p $out
     diskImage=$out/${name}.img
