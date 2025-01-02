@@ -192,6 +192,7 @@ let
       "avahi-daemon" # mDNS support
       "openssh-server" # Remote login
       "networkd-dispatcher" # Networkd hooks
+      "nginx" # Web server
 
       # ROS build tools
       "ros-dev-tools"
@@ -202,19 +203,40 @@ let
       "ros-jazzy-micro-ros-agent"
 
       # ibis_ros dependencies
-      "ros-jazzy-async-web-server-cpp"
-      "ros-jazzy-robot-state-publisher"
-      "ros-jazzy-rosbridge-server"
+      "ros-jazzy-compressed-image-transport"
       "ros-jazzy-cv-bridge"
       "ros-jazzy-depthai"
       "ros-jazzy-depthai-bridge"
       "ros-jazzy-generate-parameter-library"
+      "ros-jazzy-imu-complementary-filter"
+      "ros-jazzy-mavlink"
       "ros-jazzy-pcl-ros"
       "ros-jazzy-pcl-conversions"
-      "libpcl-dev"
+      "ros-jazzy-pybind11-vendor"
+      "ros-jazzy-robot-state-publisher"
+      "ros-jazzy-rosbag2-py"
+      "ros-jazzy-rosbag2-storage-mcap"
+      "ros-jazzy-rosbridge-server"
+      "ros-jazzy-web-video-server"
+      "ros-jazzy-xacro"
       "libapr1-dev"
       "libaprutil1-dev"
-      "ffmpeg"
+      "libavcodec-dev"
+      "libavdevice-dev"
+      "libavfilter-dev"
+      "libavformat-dev"
+      "libavutil-dev"
+      "libpcl-dev"
+      "libpostproc-dev"
+      "libswresample-dev"
+      "libswscale-dev"
+      "python3-piexif"
+      "python3-serial"
+      "python3-yaml"
+
+      # ibis_ui dependencies
+      "npm"
+      "yarnpkg"
     ];
   }) { inherit fetchurl; };
 
@@ -229,7 +251,7 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
 
   ibis_ros_src = builtins.fetchGit {
     url = "git@github.com:fictionlab-ibis/ibis_ros.git";
-    rev = "5e7cdbcdc7893f94aed2c7166d2e92acb480c2d1";
+    rev = "2b6ad7dd06a57b5affee76d6e1e58f05f05ca75a";
     submodules = true;
   };
 
