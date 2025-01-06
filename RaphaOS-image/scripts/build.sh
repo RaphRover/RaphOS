@@ -78,6 +78,9 @@ cp -v /mnt/usr/share/systemd/tmp.mount /mnt/etc/systemd/system/
 
 # Fix file permissions
 chmod +x /mnt/usr/lib/ros/*
+chmod +x /mnt/etc/networkd-dispatcher/degraded.d/*
+chmod +x /mnt/etc/networkd-dispatcher/off.d/*
+chmod +x /mnt/etc/networkd-dispatcher/routable.d/*
 
 # Symlink resolv.conf to systemd-resolved
 ln -vsnf /lib/systemd/resolv.conf /mnt/etc/resolv.conf
