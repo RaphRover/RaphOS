@@ -20,7 +20,7 @@ jobs:
     - uses: nix-community/cache-nix-action@v5
       with:
         # restore and save a cache using this key
-        primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.nix', 'flake.lock', 'bootstrapper-config', 'RaphaOS-image') }}
+        primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.nix', 'flake.lock', 'bootstrapper-config', 'OS-image') }}
         # if there's no cache hit, restore a cache by this prefix
         restore-prefixes-first-match: nix-${{ runner.os }}-
         # do purge caches
@@ -37,5 +37,4 @@ jobs:
         nix fmt -- -c .
     - name: Prepare cache
       run: |
-        nix build .#RaphaOS-image .#RaphaOS-image.debsClosure
         nix store gc

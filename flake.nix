@@ -11,7 +11,7 @@
       OSName = "RaphaOS";
       version = "0.1.0";
 
-      OSImage = pkgs.callPackage ./RaphaOS-image { inherit OSName version; };
+      OSImage = pkgs.callPackage ./OS-image { inherit OSName version; };
 
       bootstrapper = nixpkgs.lib.nixosSystem {
         inherit system;
