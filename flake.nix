@@ -8,11 +8,14 @@
       system = "x86_64-linux";
       pkgs = (import nixpkgs) { inherit system; };
 
-      RaphaOS-image = pkgs.callPackage ./RaphaOS-image { };
+      OSName = "RaphaOS";
+      version = "0.1.0";
+
+      OSImage = pkgs.callPackage ./RaphaOS-image { inherit OSName version; };
 
       bootstrapper = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit inputs RaphaOS-image; };
+        specialArgs = { inherit inputs OSName OSImage version; };
         modules = [ ./bootstrapper-config ];
       };
 
@@ -20,7 +23,7 @@
       nixosConfigurations = { inherit bootstrapper; };
 
       packages.${system} = {
-        inherit RaphaOS-image;
+        inherit OSImage;
         default = bootstrapper.config.system.build.isoImage;
       };
 

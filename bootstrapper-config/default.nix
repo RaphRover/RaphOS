@@ -1,4 +1,4 @@
-{ config, lib, pkgs, inputs, RaphaOS-image, ... }:
+{ OSName, OSImage, version, lib, pkgs, inputs, ... }:
 
 {
   imports = [
@@ -11,7 +11,7 @@
   time.timeZone = "Europe/London";
 
   isoImage = {
-    isoBaseName = "RaphaOS-Bootstrapper";
+    isoName = lib.mkForce "${OSName}-bootstrapper-${version}.iso";
     makeBiosBootable = false;
     makeEfiBootable = true;
     squashfsCompression = "zstd";
@@ -53,7 +53,7 @@
                 (python312Packages.python.withPackages (ps: [ ps.pyparted ]))
                 util-linuxMinimal
               ]
-            } --set OS_IMG_FILE "${RaphaOS-image}/RaphaOS.img"
+            } --set OS_IMG_FILE "${OSImage}/OS.img"
         '';
       })
     ];

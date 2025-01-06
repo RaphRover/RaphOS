@@ -1,7 +1,6 @@
-{ lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, ... }:
+{ OSName, version, lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, ... }:
 let
-  name = "RaphaOS";
-  size = 8192;
+  imageSize = 8192;
 
   tools = import ./tools.nix { inherit lib pkgs; };
 
@@ -245,7 +244,9 @@ let
   '';
 
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit name size debs_unpack debs_install;
+  inherit OSName version debs_unpack debs_install;
+  
+  pname = "${OSName}-image";
 
   memSize = 4096;
 
@@ -262,8 +263,8 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
 
   preVM = ''
     mkdir -p $out
-    diskImage=$out/${name}.img
-    ${pkgs.qemu_kvm}/bin/qemu-img create -f raw $diskImage "${toString size}M"
+    diskImage=$out/OS.img
+    ${pkgs.qemu_kvm}/bin/qemu-img create -f raw $diskImage "${toString imageSize}M"
   '';
 
   buildCommand = ''
