@@ -8,7 +8,7 @@
       system = "x86_64-linux";
       pkgs = (import nixpkgs) { inherit system; };
 
-      OSName = "RaphaOS";
+      OSName = "IbisOS";
       version = "0.1.0";
 
       OSImage = pkgs.callPackage ./OS-image { inherit OSName version; };
