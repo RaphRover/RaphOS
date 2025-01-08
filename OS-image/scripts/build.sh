@@ -106,6 +106,9 @@ for GRP in adm dialout audio sudo video plugdev input; do
     adduser $FIRST_USER_NAME "\${GRP}"
 done
 
+# Allow nginx to serve files from the home directory
+usermod -a -G ${FIRST_USER_NAME} www-data
+
 # Build IBIS packages
 su - ${FIRST_USER_NAME}
 cd /home/ibis
