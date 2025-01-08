@@ -92,6 +92,10 @@ rm /mnt/etc/ssh/ssh_host_*
 echo "${TARGET_HOSTNAME}" > "/mnt/etc/hostname"
 printf "\n127.0.1.1 ${TARGET_HOSTNAME}\n" >> "/mnt/etc/hosts"
 
+# Configure nginx
+rm -vf /mnt/etc/nginx/sites-enabled/default
+ln -vs /etc/nginx/sites-available/ibis_ui /mnt/etc/nginx/sites-enabled/ibis_ui
+
 my_chroot /mnt /bin/bash -exuo pipefail <<CHROOT
 # Create default user
 if ! id -u ${FIRST_USER_NAME} >/dev/null 2>&1; then

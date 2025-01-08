@@ -1,4 +1,5 @@
-{ OSName, version, lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, ... }:
+{ OSName, version, lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper
+, buildNpmPackage, ... }:
 let
   imageSize = 8192;
 
@@ -13,6 +14,22 @@ let
       url = "https://files.fictionlab.pl/repo/fictionlab.gpg";
       sha256 = "sha256-noqi5NcMDrnwMp9JFVUrLJkH65WH9/EDISQIVT8Hnf8=";
     });
+
+    ibis_ui = buildNpmPackage {
+      pname = "ibis_ui";
+      version = "0.1.0";
+      src = builtins.fetchGit {
+        url = "git@github.com:fictionlab-ibis/ibis_ui.git";
+        rev = "5dfe3ad1261b5408dd7c5da11a29250e5d946255";
+      };
+      npmDepsHash = "sha256-iKSklmKypaIO/wPYcOlXMMJmv500oIXMAbkTK1Uxj+w=";
+      makeCacheWritable = true;
+      installPhase = ''
+        mkdir $out
+        cp -r build/* $out
+      '';
+    };
+
   in stdenv.mkDerivation {
     name = "files";
     src = ./files;
@@ -21,6 +38,9 @@ let
       mkdir -p $out/usr/share/keyrings
       cp -v ${ros-archive-keyring} $out/usr/share/keyrings/ros-archive-keyring.gpg
       cp -v ${fictionlab-archive-keyring} $out/usr/share/keyrings/fictionlab-archive-keyring.gpg
+
+      mkdir -p $out/opt
+      cp -vr ${ibis_ui} $out/opt/ibis_ui
 
       cp -vr $src/* $out
     '';
@@ -232,10 +252,6 @@ let
       "python3-piexif"
       "python3-serial"
       "python3-yaml"
-
-      # ibis_ui dependencies
-      "npm"
-      "yarnpkg"
     ];
   }) { inherit fetchurl; };
 
@@ -245,7 +261,7 @@ let
 
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
   inherit OSName version debs_unpack debs_install;
-  
+
   pname = "${OSName}-image";
 
   memSize = 4096;
@@ -256,15 +272,12 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
     submodules = true;
   };
 
-  ibis_ui_src = builtins.fetchGit {
-    url = "git@github.com:fictionlab-ibis/ibis_ui.git";
-    rev = "07c25ebfe6f8b4c03208daa373328660abc44c39";
-  };
-
   preVM = ''
     mkdir -p $out
     diskImage=$out/OS.img
-    ${pkgs.qemu_kvm}/bin/qemu-img create -f raw $diskImage "${toString imageSize}M"
+    ${pkgs.qemu_kvm}/bin/qemu-img create -f raw $diskImage "${
+      toString imageSize
+    }M"
   '';
 
   buildCommand = ''
