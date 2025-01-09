@@ -20,7 +20,7 @@ let
       version = "0.1.0";
       src = builtins.fetchGit {
         url = "git@github.com:fictionlab-ibis/ibis_ui.git";
-        rev = "5dfe3ad1261b5408dd7c5da11a29250e5d946255";
+        rev = "dc66ad16800397b9a4b8f7a98dd22961dd11ca30";
       };
       npmDepsHash = "sha256-iKSklmKypaIO/wPYcOlXMMJmv500oIXMAbkTK1Uxj+w=";
       makeCacheWritable = true;
@@ -268,7 +268,7 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
 
   ibis_ros_src = builtins.fetchGit {
     url = "git@github.com:fictionlab-ibis/ibis_ros.git";
-    rev = "c09c2eb11790148adbf059b6e44780783dddaa10";
+    rev = "e317cb540e0956c3b49251a0c9bb16462dab2d94";
     submodules = true;
   };
 
