@@ -118,6 +118,9 @@ cd ros_ws
 source /opt/ros/jazzy/setup.bash
 colcon build --event-handlers desktop_notification- status- terminal_title- --cmake-args -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
 
+# Hack fix (TODO: remove)
+cp -vr ~/ros_ws/build/sony_cr_wrapper/CrAdapter ~/ros_ws/install/sony_cr_wrapper/lib/sony_cr_wrapper/
+
 # Enable user services
 systemctl --user enable ros-nodes
 systemctl --user enable uros-agent
