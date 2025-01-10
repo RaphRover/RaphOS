@@ -1,7 +1,5 @@
 [Unit]
 Description=Mount External Disk at /home/ibis/external_disk_mountpoint
-Requires=local-fs.target
-After=local-fs.target
 BindsTo=dev-sda1.device
 Before=umount.target
 
