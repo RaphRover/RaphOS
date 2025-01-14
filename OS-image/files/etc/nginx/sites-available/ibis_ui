@@ -22,4 +22,13 @@ server {
         alias /home/ibis/external_disk_mountpoint/;
         autoindex on;
     }
+
+    location = /logs {
+        return 301 /logs/;
+    }
+
+    location /logs/ {
+        alias /home/ibis/.ros/log/;
+        autoindex on;
+    }
 }
