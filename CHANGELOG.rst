@@ -1,3 +1,8 @@
+0.2.1 (2025-01-16)
+------------------
+* The JPG filenames in the output inspections are now prefixed with the camera output name and the number of seconds since epoch.
+* Previously for the external disk to be mounted, the disk had to have the first partition formatted as exFAT. Now the exFat partition can be the first OR the second patition on the disk. This should make it work with the stock partition layout of the Lexar disk.
+
 0.2.0 (2025-01-15)
 ------------------
 * Sony camera image file type is now automatically set to JPEG upon connection. No longer need to manually set it on every camera.
