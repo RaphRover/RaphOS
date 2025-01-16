@@ -1,0 +1,13 @@
+[Unit]
+Description=Mount External Disk at /home/ibis/external_disk_mountpoint
+BindsTo=dev-%i.device
+After=dev-%i.device
+
+[Service]
+Type=oneshot
+ExecStart=/bin/mount -t exfat -o uid=ibis,gid=ibis,umask=0022 /dev/%i /home/ibis/external_disk_mountpoint
+ExecStop=/bin/umount /home/ibis/external_disk_mountpoint
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
