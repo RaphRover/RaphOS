@@ -1,3 +1,6 @@
+0.2.2 (2025-01-17)
+* Fixed an issue with missing external disk mountpoint directory.
+
 0.2.1 (2025-01-16)
 ------------------
 * The JPG filenames in the output inspections are now prefixed with the camera output name and the number of seconds since epoch.
