@@ -7,12 +7,12 @@ let
 
   ibis_ui = buildNpmPackage {
     pname = "ibis_ui";
-    version = "1.1.0";
+    version = "1.3.0";
     src = builtins.fetchGit {
       url = "git@github.com:fictionlab-ibis/ibis_ui.git";
-      rev = "5d07e57f12e9c67fa54f514f21a052474424720f";
+      rev = "9a04562017207789f4ca90ff3d4014978149bd49";
     };
-    npmDepsHash = "sha256-QXSjLFmh1HJHMzb8Xb3d7YqDPix40/WIxD05Md5Eud0=";
+    npmDepsHash = "sha256-mIkqhtZXy6K15A1I4tnCIY1IAznJqvGqQT5ZDHYV9NY=";
     makeCacheWritable = true;
     installPhase = ''
       mkdir $out
@@ -218,7 +218,7 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
 
   ibis_ros_src = builtins.fetchGit {
     url = "git@github.com:fictionlab-ibis/ibis_ros.git";
-    rev = "2ac132ac58ac74ae41b2dca1e12dab46a9e7688a";
+    rev = "6eb013356fab5539bfc775fd3182c218d8c58054";
     submodules = true;
   };
 
