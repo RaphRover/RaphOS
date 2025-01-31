@@ -1,84 +1,32 @@
-{ OSName, version, lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper
+{ OSName, OSVersion, lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper
 , buildNpmPackage, ... }:
 let
   imageSize = 8192;
 
   tools = import ./tools.nix { inherit lib pkgs; };
 
-  files = let
-    ros-archive-keyring = (fetchurl {
-      url = "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key";
-      sha256 = "sha256-OkyNWeOg+7Ks8ziZS2ECxbqhcHHEzJf1ILSCppf4pP4=";
-    });
-    fictionlab-archive-keyring = (fetchurl {
-      url = "https://files.fictionlab.pl/repo/fictionlab.gpg";
-      sha256 = "sha256-noqi5NcMDrnwMp9JFVUrLJkH65WH9/EDISQIVT8Hnf8=";
-    });
-
-    ibis_ui = buildNpmPackage {
-      pname = "ibis_ui";
-      version = "1.1.0";
-      src = builtins.fetchGit {
-        url = "git@github.com:fictionlab-ibis/ibis_ui.git";
-        rev = "5d07e57f12e9c67fa54f514f21a052474424720f";
-      };
-      npmDepsHash = "sha256-QXSjLFmh1HJHMzb8Xb3d7YqDPix40/WIxD05Md5Eud0=";
-      makeCacheWritable = true;
-      installPhase = ''
-        mkdir $out
-        cp -r build/* $out
-      '';
+  ibis_ui = buildNpmPackage {
+    pname = "ibis_ui";
+    version = "1.3.0";
+    src = builtins.fetchGit {
+      url = "git@github.com:fictionlab-ibis/ibis_ui.git";
+      rev = "9a04562017207789f4ca90ff3d4014978149bd49";
     };
-
-  in stdenv.mkDerivation {
-    name = "files";
-    src = ./files;
-    phases = [ "unpackPhase" "installPhase" ];
+    npmDepsHash = "sha256-mIkqhtZXy6K15A1I4tnCIY1IAznJqvGqQT5ZDHYV9NY=";
+    makeCacheWritable = true;
     installPhase = ''
-      mkdir -p $out/usr/share/keyrings
-      cp -v ${ros-archive-keyring} $out/usr/share/keyrings/ros-archive-keyring.gpg
-      cp -v ${fictionlab-archive-keyring} $out/usr/share/keyrings/fictionlab-archive-keyring.gpg
-
-      mkdir -p $out/opt
-      cp -vr ${ibis_ui} $out/opt/ibis_ui
-
-      cp -vr $src/* $out
+      mkdir $out
+      cp -r build/* $out
     '';
   };
 
-  scripts = stdenv.mkDerivation {
-    name = "scripts";
-    src = ./scripts;
-    nativeBuildInputs = [ makeWrapper ];
-    phases = [ "unpackPhase" "installPhase" "postFixup" ];
-    installPhase = ''
-      mkdir -p $out
-      cp -vr $src/* $out
-    '';
-    postFixup = ''
-      wrapProgram $out/build.sh \
-      --set PATH "${
-        with pkgs;
-        lib.makeBinPath [
-          gptfdisk
-          util-linux
-          dosfstools
-          e2fsprogs
-          dpkg
-          coreutils
-          gnutar
-          systemd
-        ]
-      }" \
-      --set FILES_DIR ${files} \
-      --set NIX_STORE_DIR ${builtins.storeDir} \
-      --set UDEVD "${pkgs.systemd}/lib/systemd/systemd-udevd"
-    '';
-  };
+  files = pkgs.callPackage ./files { inherit OSName OSVersion ibis_ui; };
+
+  scripts = pkgs.callPackage ./scripts { inherit files; };
 
   packageLists = let
-    noble-updates-stamp = "20250101T120000Z";
-    ros2-stamp = "2024-11-21";
+    noble-updates-stamp = "20250131T120000Z";
+    ros2-stamp = "2024-12-23";
     fictionlab-stamp = "2024-07-22";
   in [
     {
@@ -102,7 +50,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-        sha256 = "sha256-fwzEaIVoPobPL1YJ+CEtUVZOsdiuQtdHOzk+xNeGvKY=";
+        sha256 = "sha256-Bbx8RdlEF4o5QUfZOkA5Z+yGUnRarO2nr0q91pnzCYw=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -111,7 +59,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
-        sha256 = "sha256-5aNIRoNKv14lvKFmyslolLJgLzXRplw8IMcDKGWH2nk=";
+        sha256 = "sha256-ULyP90nC3mA39mi5WuvxiNGJ1aV55hNmaO4ziVEVN0A=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -120,7 +68,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
-        sha256 = "sha256-V7Law/wG7M4+Dr+8PCtW3eNYe9YNKhHme2BRbSudXh8=";
+        sha256 = "sha256-JugStwrMF6ogTxzs9LQogLvNmzA116X/3uzXfeD0CQg=";
       });
       urlPrefix = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu";
     }
@@ -196,6 +144,7 @@ let
       "systemd" # init system
       "systemd-sysv" # provides systemd as /sbin/init
       "libpam-systemd" # makes systemd user sevices work
+      "policykit-1" # authorization manager for systemd
       "e2fsprogs" # initramfs wants fsck
       "zstd" # compress kernel using zstd
       "linux-image-generic" # kernel
@@ -260,15 +209,16 @@ let
   '';
 
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit OSName version debs_unpack debs_install;
+  inherit OSName debs_unpack debs_install;
 
   pname = "${OSName}-image";
+  version = OSVersion;
 
   memSize = 4096;
 
   ibis_ros_src = builtins.fetchGit {
     url = "git@github.com:fictionlab-ibis/ibis_ros.git";
-    rev = "2ac132ac58ac74ae41b2dca1e12dab46a9e7688a";
+    rev = "c727ed2e90f79fa5db403df3f281c38851141622";
     submodules = true;
   };
 

@@ -1,4 +1,4 @@
-{ OSName, OSImage, version, lib, pkgs, inputs, ... }:
+{ OSName, OSImage, OSVersion, lib, pkgs, inputs, ... }:
 
 {
   imports = [
@@ -10,8 +10,9 @@
 
   time.timeZone = "Europe/London";
 
+  image.baseName = lib.mkForce "${OSName}-bootstrapper-${OSVersion}";
+
   isoImage = {
-    isoName = lib.mkForce "${OSName}-bootstrapper-${version}.iso";
     makeBiosBootable = false;
     makeEfiBootable = true;
     squashfsCompression = "zstd";

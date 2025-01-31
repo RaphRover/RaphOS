@@ -9,13 +9,13 @@
       pkgs = (import nixpkgs) { inherit system; };
 
       OSName = "IbisOS";
-      version = "0.2.2";
+      OSVersion = "0.2.2";
 
-      OSImage = pkgs.callPackage ./OS-image { inherit OSName version; };
+      OSImage = pkgs.callPackage ./OS-image { inherit OSName OSVersion; };
 
       bootstrapper = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit inputs OSName OSImage version; };
+        specialArgs = { inherit inputs OSName OSImage OSVersion; };
         modules = [ ./bootstrapper-config ];
       };
 

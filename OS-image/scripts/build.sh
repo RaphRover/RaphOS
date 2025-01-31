@@ -72,6 +72,9 @@ for component in ${DEBS_INSTALL_FILES}; do
     my_chroot /mnt dpkg --install --force-conflicts --force-overwrite $debs < /dev/null
 done
 
+# Remove redundant files
+rm -rf /mnt/etc/update-motd.d/*
+
 # Install configuration files
 cp -vr --no-preserve=mode "${FILES_DIR}/"* /mnt/
 cp -v /mnt/usr/share/systemd/tmp.mount /mnt/etc/systemd/system/
@@ -81,6 +84,7 @@ chmod +x /mnt/usr/lib/ros/*
 chmod +x /mnt/etc/networkd-dispatcher/degraded.d/*
 chmod +x /mnt/etc/networkd-dispatcher/off.d/*
 chmod +x /mnt/etc/networkd-dispatcher/routable.d/*
+chmod +x /mnt/etc/update-motd.d/*
 
 # Symlink resolv.conf to systemd-resolved
 ln -vsnf /lib/systemd/resolv.conf /mnt/etc/resolv.conf
