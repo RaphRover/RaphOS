@@ -139,10 +139,10 @@ class Animation:
 ANIMATIONS = {
     "STARTING": Animation(
         LEDManager(
-            stages=[10, 0, 10, 0], durations=[0.5, 0.5, 0.5, 0.5], name="STARTING_LEFT"
+            stages=[10, 0], durations=[0.5, 0.5], name="STARTING_LEFT"
         ),
         LEDManager(
-            stages=[0, 10, 0, 10], durations=[0.5, 0.5, 0.5, 0.5], name="STARTING_RIGHT"
+            stages=[0, 10], durations=[0.5, 0.5], name="STARTING_RIGHT"
         ),
     ),
     "FLASHING": Animation(
