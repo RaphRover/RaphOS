@@ -4,11 +4,46 @@ import argparse
 import os
 import subprocess
 import time
+import serial
+import sys
+import threading
+
 from pathlib import Path
 
 import parted
 
-print("--> Started OS installation procedure")
+
+from led_interface import thread_loop, AnimationManager
+
+leds_thread = None
+
+serial_connection = serial.Serial()
+serial_connection.port = "/dev/ttyS0"
+serial_connection.baudrate = 115200
+serial_connection.timeout = 1
+
+def leds_thread_cleanup():
+    global stop_thread, leds_thread, serial_connection
+    stop_thread.set()
+    leds_thread.join()
+    serial_connection.close()
+
+try:
+    serial_connection.open()
+except Exception as e:
+    print("Error: cannot open serial port - no light signals during installation.", file=sys.stderr)
+
+if serial_connection.is_open:
+    stop_thread = threading.Event()
+    anim_lock = threading.Lock()
+    timer_period = 0.01
+
+    anim_manager = AnimationManager(timer_period=timer_period)
+    leds_thread = threading.Thread(target = thread_loop, args = (serial_connection, stop_thread, anim_manager, anim_lock, timer_period))
+    
+    leds_thread.start()
+
+print("--> Started OS installation procedure", file=sys.stderr)
 
 parser = argparse.ArgumentParser(description='OS installation script')
 parser.add_argument('-f', '--force', action='store_true', help='Force installation')
@@ -33,20 +68,40 @@ BASEBOARD_MANUFACTURER = get_dmidecode_info(2, "Manufacturer")
 BASEBOARD_PRODUCT_NAME = get_dmidecode_info(2, "Product Name")
 
 if BASEBOARD_MANUFACTURER != "AAEON" or BASEBOARD_PRODUCT_NAME != "UP-ADLN01":
-    print(f"Error: Unrecognized hardware (Manufacturer: {BASEBOARD_MANUFACTURER}, Product Name: {BASEBOARD_PRODUCT_NAME})")
+    print(f"Error: Unrecognized hardware (Manufacturer: {BASEBOARD_MANUFACTURER}, Product Name: {BASEBOARD_PRODUCT_NAME})", file=sys.stderr)
     if not FORCE:
+        if leds_thread:
+            with anim_lock:
+                anim_manager.set_state("ERROR")
+            
+            time.sleep(timer_period)
+            leds_thread_cleanup()
+        
         exit(1)
     else:
-        print("--> Force option enabled, continuing installation...")
+        print("--> Force option enabled, continuing installation...", file=sys.stderr)
 
 if not DISK_PATH.exists() or not DISK_PATH.is_block_device():
-    print(f"Error: The disk path {DISK_PATH} does not exist or is not a block device")
+    print(f"Error: The disk path {DISK_PATH} does not exist or is not a block device", file=sys.stderr)   
+    if leds_thread:
+        with anim_lock:
+            anim_manager.set_state("ERROR")
+        
+        time.sleep(timer_period)
+        leds_thread_cleanup()
+    
     exit(1)
 
-print(f"--> Will install {IMG_PATH} into {DISK_PATH} in 5 seconds. Type Ctrl+C to interrupt.")
+print(f"--> Will install {IMG_PATH} into {DISK_PATH} in 5 seconds. Type Ctrl+C to interrupt.", file=sys.stderr)
+if leds_thread:
+    with anim_lock:
+        anim_manager.set_state("STARTING")
 time.sleep(5)
 
-print("--> Writing image into disk...")
+print("--> Writing image into disk...", file=sys.stderr)
+if leds_thread:
+    with anim_lock:
+        anim_manager.set_state("FLASHING")
 subprocess.run(['dd', f'if={IMG_PATH}', f'of={DISK_PATH}', 'bs=8K', 'status=progress'])
 os.sync()
 
@@ -65,7 +120,14 @@ def resize_root_partition():
             break
 
     if not root_partition:
-        print("Error: Could not find the root partition")
+        print("Error: Could not find the root partition", file=sys.stderr)
+        if leds_thread:
+            with anim_lock:
+                anim_manager.set_state("ERROR")
+           
+            time.sleep(timer_period)
+            leds_thread_cleanup()
+        
         exit(1)
 
     # Resize the partition to use the maximum available space
@@ -75,12 +137,23 @@ def resize_root_partition():
     # Resize the filesystem
     subprocess.run(['resize2fs', "-f", f'{root_partition.path}'])
 
-print("--> Resizing root partition...")
+print("--> Resizing root partition...", file=sys.stderr)
 resize_root_partition()
 
-print("--> Disk image successfully written. Unplug the thumbstick drive to reboot or type Ctrl+C to open interactive shell.")
+print("--> Disk image successfully written. Unplug the thumbstick drive to reboot or type Ctrl+C to open interactive shell.", file=sys.stderr)
+if leds_thread:
+    with anim_lock:
+        anim_manager.set_state("FINISH")
 subprocess.run(['inotifywait', '-e', 'DELETE_SELF', '/dev/root'])
 
 # Perform a hard reboot.
+
+if leds_thread:
+    with anim_lock:
+        anim_manager.set_state("OFF")
+        
+    time.sleep(timer_period)
+    leds_thread_cleanup()
+
 with open('/proc/sysrq-trigger', 'w') as f:
     f.write('b')

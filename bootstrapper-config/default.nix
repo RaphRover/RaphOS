@@ -40,6 +40,7 @@
         buildPhase = ''
           mkdir -p $out/bin
           install -t $out/bin ./install-os
+          install -t $out/bin ./led_interface.py
         '';
 
         postFixup = ''
@@ -51,7 +52,8 @@
                 e2fsprogs
                 gptfdisk
                 inotify-tools
-                (python312Packages.python.withPackages (ps: [ ps.pyparted ]))
+                (python312Packages.python.withPackages
+                  (ps: [ ps.pyparted ps.pyserial ]))
                 util-linuxMinimal
               ]
             } --set OS_IMG_FILE "${OSImage}/OS.img"
