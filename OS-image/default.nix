@@ -25,8 +25,8 @@ let
   scripts = pkgs.callPackage ./scripts { inherit files; };
 
   packageLists = let
-    noble-updates-stamp = "20250131T120000Z";
-    ros2-stamp = "2024-12-23";
+    noble-updates-stamp = "20250210T120000Z";
+    ros2-stamp = "2025-01-20";
     fictionlab-stamp = "2024-07-22";
   in [
     {
@@ -50,7 +50,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-        sha256 = "sha256-Bbx8RdlEF4o5QUfZOkA5Z+yGUnRarO2nr0q91pnzCYw=";
+        sha256 = "sha256-n4N/7bPBtnIwSajCLEfK+hlk3h76xyPAfLwnhX4xigs=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -59,7 +59,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
-        sha256 = "sha256-ULyP90nC3mA39mi5WuvxiNGJ1aV55hNmaO4ziVEVN0A=";
+        sha256 = "sha256-lPnkRdS6OcxSGQMnSu6V521S3QF4fBvQiDFDoWr0Bp4=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -68,7 +68,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
-        sha256 = "sha256-JugStwrMF6ogTxzs9LQogLvNmzA116X/3uzXfeD0CQg=";
+        sha256 = "sha256-oCoKPBQKAwYMQ4tzPWEMOaQ5ZiJ82TLDPGrwUw3fr6I=";
       });
       urlPrefix = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu";
     }
