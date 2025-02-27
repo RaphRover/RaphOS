@@ -218,7 +218,7 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
 
   ibis_ros_src = builtins.fetchGit {
     url = "git@github.com:fictionlab-ibis/ibis_ros.git";
-    rev = "1557341493db581d5eb5b5901ff87bd1203d689d";
+    rev = "5e95b8ec886d1bac3b478057a646c224866a4051";
     submodules = true;
   };
 
