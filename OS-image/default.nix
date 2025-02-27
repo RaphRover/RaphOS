@@ -10,9 +10,9 @@ let
     version = "1.3.0";
     src = builtins.fetchGit {
       url = "git@github.com:fictionlab-ibis/ibis_ui.git";
-      rev = "9a04562017207789f4ca90ff3d4014978149bd49";
+      rev = "cb2044e363d5cf1349e0738e2ae3260019ed4c80";
     };
-    npmDepsHash = "sha256-mIkqhtZXy6K15A1I4tnCIY1IAznJqvGqQT5ZDHYV9NY=";
+    npmDepsHash = "sha256-5bFjTiKXvq4Peyi/77hFMT+v6s3eqL3n90cLe7IMyPc=";
     makeCacheWritable = true;
     installPhase = ''
       mkdir $out
