@@ -25,7 +25,7 @@ let
   scripts = pkgs.callPackage ./scripts { inherit files; };
 
   packageLists = let
-    noble-updates-stamp = "20250210T120000Z";
+    noble-updates-stamp = "20250227T120000Z";
     ros2-stamp = "2025-01-20";
     fictionlab-stamp = "2024-07-22";
   in [
@@ -49,8 +49,8 @@ let
       name = "noble-updates-main";
       packagesFile = (fetchurl {
         url =
-          "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-        sha256 = "sha256-n4N/7bPBtnIwSajCLEfK+hlk3h76xyPAfLwnhX4xigs=";
+          "http://snapshot.ubuntu.com/ubuntu/20250227T120000Z/dists/noble-updates/main/binary-amd64/Packages.xz";
+        sha256 = "sha256-4trmJ96kCY/fCgIxWqQnZ3hKVLnGu4WsxH0VLsgl7Ck=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -58,8 +58,8 @@ let
       name = "noble-updates-universe";
       packagesFile = (fetchurl {
         url =
-          "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
-        sha256 = "sha256-lPnkRdS6OcxSGQMnSu6V521S3QF4fBvQiDFDoWr0Bp4=";
+          "http://snapshot.ubuntu.com/ubuntu/20250227T120000Z/dists/noble-updates/universe/binary-amd64/Packages.xz";
+        sha256 = "sha256-i7V6ZKKSqDq6AEVKZ9Mkko1qKZsTvGBwJZ8L464XBXs=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -218,7 +218,7 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
 
   ibis_ros_src = builtins.fetchGit {
     url = "git@github.com:fictionlab-ibis/ibis_ros.git";
-    rev = "c727ed2e90f79fa5db403df3f281c38851141622";
+    rev = "1557341493db581d5eb5b5901ff87bd1203d689d";
     submodules = true;
   };
 
