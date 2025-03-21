@@ -6,48 +6,44 @@ import subprocess
 import time
 import serial
 import sys
-import threading
 
 from pathlib import Path
 
 import parted
 
 
-from led_interface import thread_loop, AnimationManager
+from led_interface import AnimationManager, AnimationType
 
-leds_thread = None
+anim_manager = None
+serial_connection = serial.Serial("/dev/ttyS0", 115200, timeout=1)
 
-serial_connection = serial.Serial()
-serial_connection.port = "/dev/ttyS0"
-serial_connection.baudrate = 115200
-serial_connection.timeout = 1
 
-def leds_thread_cleanup():
-    global stop_thread, leds_thread, serial_connection
-    stop_thread.set()
-    leds_thread.join()
+def animator_cleanup():
+    global serial_connection, anim_manager
+    anim_manager.stop()
+    anim_manager.join()
     serial_connection.close()
+
 
 try:
     serial_connection.open()
 except Exception as e:
-    print("Error: cannot open serial port - no light signals during installation.", file=sys.stderr)
+    print(
+        "Error: cannot open serial port - no light signals during installation.",
+        file=sys.stderr,
+    )
 
 if serial_connection.is_open:
-    stop_thread = threading.Event()
-    anim_lock = threading.Lock()
     timer_period = 0.01
 
-    anim_manager = AnimationManager(timer_period=timer_period)
-    leds_thread = threading.Thread(target = thread_loop, args = (serial_connection, stop_thread, anim_manager, anim_lock, timer_period))
-    
-    leds_thread.start()
+    anim_manager = AnimationManager(timer_period=timer_period, serial=serial_connection)
+    anim_manager.start()
 
 print("--> Started OS installation procedure", file=sys.stderr)
 
-parser = argparse.ArgumentParser(description='OS installation script')
-parser.add_argument('-f', '--force', action='store_true', help='Force installation')
-parser.add_argument('-d', '--disk', default='/dev/mmcblk0', help='Disk path')
+parser = argparse.ArgumentParser(description="OS installation script")
+parser.add_argument("-f", "--force", action="store_true", help="Force installation")
+parser.add_argument("-d", "--disk", default="/dev/mmcblk0", help="Disk path")
 args = parser.parse_args()
 
 FORCE = args.force
@@ -55,59 +51,69 @@ DISK_PATH = Path(args.disk)
 
 assert "OS_IMG_FILE" in os.environ, "Error: OS_IMG_FILE environment variable is not set"
 
-IMG_PATH = Path(os.getenv('OS_IMG_FILE'))
+IMG_PATH = Path(os.getenv("OS_IMG_FILE"))
+
 
 def get_dmidecode_info(type_id, field):
-    result = subprocess.run(['dmidecode', '-t', str(type_id)], capture_output=True, text=True)
+    result = subprocess.run(
+        ["dmidecode", "-t", str(type_id)], capture_output=True, text=True
+    )
     for line in result.stdout.splitlines():
         if field in line:
-            return line.split(':')[1].strip()
+            return line.split(":")[1].strip()
     return None
+
 
 BASEBOARD_MANUFACTURER = get_dmidecode_info(2, "Manufacturer")
 BASEBOARD_PRODUCT_NAME = get_dmidecode_info(2, "Product Name")
 
 if BASEBOARD_MANUFACTURER != "AAEON" or BASEBOARD_PRODUCT_NAME != "UP-ADLN01":
-    print(f"Error: Unrecognized hardware (Manufacturer: {BASEBOARD_MANUFACTURER}, Product Name: {BASEBOARD_PRODUCT_NAME})", file=sys.stderr)
+    print(
+        f"Error: Unrecognized hardware (Manufacturer: {BASEBOARD_MANUFACTURER}, Product Name: {BASEBOARD_PRODUCT_NAME})",
+        file=sys.stderr,
+    )
     if not FORCE:
-        if leds_thread:
-            with anim_lock:
-                anim_manager.set_state("ERROR")
-            
+        if anim_manager:
+            anim_manager.set_animation(AnimationType.ERROR)
+
             time.sleep(timer_period)
-            leds_thread_cleanup()
-        
+            animator_cleanup()
+
         exit(1)
     else:
         print("--> Force option enabled, continuing installation...", file=sys.stderr)
 
 if not DISK_PATH.exists() or not DISK_PATH.is_block_device():
-    print(f"Error: The disk path {DISK_PATH} does not exist or is not a block device", file=sys.stderr)   
-    if leds_thread:
-        with anim_lock:
-            anim_manager.set_state("ERROR")
-        
+    print(
+        f"Error: The disk path {DISK_PATH} does not exist or is not a block device",
+        file=sys.stderr,
+    )
+    if anim_manager:
+        anim_manager.set_animation(AnimationType.ERROR)
+
         time.sleep(timer_period)
-        leds_thread_cleanup()
-    
+        animator_cleanup()
+
     exit(1)
 
-print(f"--> Will install {IMG_PATH} into {DISK_PATH} in 5 seconds. Type Ctrl+C to interrupt.", file=sys.stderr)
-if leds_thread:
-    with anim_lock:
-        anim_manager.set_state("STARTING")
+print(
+    f"--> Will install {IMG_PATH} into {DISK_PATH} in 5 seconds. Type Ctrl+C to interrupt.",
+    file=sys.stderr,
+)
+if anim_manager:
+    anim_manager.set_animation(AnimationType.STARTING)
 time.sleep(5)
 
 print("--> Writing image into disk...", file=sys.stderr)
-if leds_thread:
-    with anim_lock:
-        anim_manager.set_state("FLASHING")
-subprocess.run(['dd', f'if={IMG_PATH}', f'of={DISK_PATH}', 'bs=8K', 'status=progress'])
+if anim_manager:
+    anim_manager.set_animation(AnimationType.FLASHING)
+subprocess.run(["dd", f"if={IMG_PATH}", f"of={DISK_PATH}", "bs=8K", "status=progress"])
 os.sync()
+
 
 def resize_root_partition():
     # Move backup GPT header to the end of the disk
-    subprocess.run(['sgdisk', '--move-second-header', DISK_PATH])
+    subprocess.run(["sgdisk", "--move-second-header", DISK_PATH])
 
     device = parted.getDevice(str(DISK_PATH))
     disk = parted.Disk(device)
@@ -121,13 +127,12 @@ def resize_root_partition():
 
     if not root_partition:
         print("Error: Could not find the root partition", file=sys.stderr)
-        if leds_thread:
-            with anim_lock:
-                anim_manager.set_state("ERROR")
-           
+        if anim_manager:
+            anim_manager.set_animation(AnimationType.ERROR)
+
             time.sleep(timer_period)
-            leds_thread_cleanup()
-        
+            animator_cleanup()
+
         exit(1)
 
     # Resize the partition to use the maximum available space
@@ -135,25 +140,27 @@ def resize_root_partition():
     disk.commit()
 
     # Resize the filesystem
-    subprocess.run(['resize2fs', "-f", f'{root_partition.path}'])
+    subprocess.run(["resize2fs", "-f", f"{root_partition.path}"])
+
 
 print("--> Resizing root partition...", file=sys.stderr)
 resize_root_partition()
 
-print("--> Disk image successfully written. Unplug the thumbstick drive to reboot or type Ctrl+C to open interactive shell.", file=sys.stderr)
-if leds_thread:
-    with anim_lock:
-        anim_manager.set_state("FINISH")
-subprocess.run(['inotifywait', '-e', 'DELETE_SELF', '/dev/root'])
+print(
+    "--> Disk image successfully written. Unplug the thumbstick drive to reboot or type Ctrl+C to open interactive shell.",
+    file=sys.stderr,
+)
+if anim_manager:
+    anim_manager.set_animation(AnimationType.FINISH)
+subprocess.run(["inotifywait", "-e", "DELETE_SELF", "/dev/root"])
 
 # Perform a hard reboot.
 
-if leds_thread:
-    with anim_lock:
-        anim_manager.set_state("OFF")
-        
-    time.sleep(timer_period)
-    leds_thread_cleanup()
+if anim_manager:
+    anim_manager.set_animation(AnimationType.OFF)
 
-with open('/proc/sysrq-trigger', 'w') as f:
-    f.write('b')
+    time.sleep(timer_period)
+    animator_cleanup()
+
+with open("/proc/sysrq-trigger", "w") as f:
+    f.write("b")

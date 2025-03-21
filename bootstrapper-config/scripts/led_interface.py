@@ -5,9 +5,9 @@
 
 import copy
 import time
-import sys
+from enum import Enum, auto
 from serial import Serial
-from threading import Event, Lock
+from threading import Event, Lock, Thread
 from typing import Optional
 
 
@@ -20,7 +20,7 @@ class LEDManager:
         List of integers representing consecutive brightness values
         of the LED light to be set (animation)
     durations : list[float]
-        List of integers representing the duration of each stages (in seconds).
+        List of floats representing the duration of each stage (in seconds).
     loop : bool
         Flag specyfing if the animation should be looped at the end.
     name : str
@@ -136,45 +136,54 @@ class Animation:
         return (val1, val2)
 
 
+class AnimationType(Enum):
+    STARTING = auto()
+    FLASHING = auto()
+    FINISH = auto()
+    OFF = auto()
+    ERROR = auto()
+
+
 ANIMATIONS = {
-    "STARTING": Animation(
+    AnimationType.STARTING: Animation(
         LEDManager(stages=[10, 0], durations=[0.5, 0.5], name="STARTING_LEFT"),
         LEDManager(stages=[0, 10], durations=[0.5, 0.5], name="STARTING_RIGHT"),
     ),
-    "FLASHING": Animation(
+    AnimationType.FLASHING: Animation(
         LEDManager(
             stages=list(range(0, 25, 1)) + list(range(25, 0, -1)),
             durations=[0.04] * 50,
             name="FLASHING",
         )
     ),
-    "FINISH": Animation(
+    AnimationType.FINISH: Animation(
         LEDManager(stages=[10, 0, 10, 0], durations=[0.1, 0.1, 0.1, 0.7], name="FINISH")
     ),
-    "OFF": Animation(LEDManager(stages=[0], durations=[1], name="OFF")),
-    "ERROR": Animation(LEDManager(stages=[5], durations=[1], name="ERROR")),
+    AnimationType.OFF: Animation(LEDManager(stages=[0], durations=[1], name="OFF")),
+    AnimationType.ERROR: Animation(LEDManager(stages=[5], durations=[1], name="ERROR")),
 }
 
 
-class AnimationManager:
-    def __init__(self, initial_state="OFF", timer_period=0.01):
+class AnimationManager(Thread):
+    def __init__(self, initial_state=AnimationType.OFF, timer_period=0.01, serial=None):
+        super().__init__()
         self.frequency = 1 / timer_period
-        self.set_state(initial_state)
+        self.mutex = Lock()
+        self._stop_event = Event()
+        self.set_animation(initial_state)
+        self.serial = serial
 
-    def set_state(self, new_state) -> None:
-        """Change animation state dynamically.
+    def set_animation(self, new_anim_type) -> None:
+        """Change animation dynamically.
 
         Parameters
         ----------
-        new_state : str
-            Name of the animation.
+        new_anim_type : AnimationType
+            One of predefined animation types.
         """
-        if new_state in ANIMATIONS:
-            self.state = new_state
-            self.current_animation = ANIMATIONS[new_state]
+        with self.mutex:
+            self.current_animation = ANIMATIONS[new_anim_type]
             self.current_animation.init_animation(self.frequency)
-        else:
-            print(f"Error: Unknown animation state '{new_state}'", file=sys.stderr)
 
     def next_value(self) -> tuple[int, int]:
         """Get the next LED brightness value
@@ -184,19 +193,15 @@ class AnimationManager:
         tuple[int, int]
             The brightness values of the LED lights to be set.
         """
-        return self.current_animation.next_values()
+        with self.mutex:
+            return self.current_animation.next_values()
+        
+    def run(self):
+        while not self._stop_event.is_set():
+            led1, led2 = self.next_value()
+            self.serial.write(f"$LED:{led1},0,0,0,{led2}\r\n".encode("utf-8"))
+            time.sleep(1/self.frequency)
 
+    def stop(self):
+        self._stop_event.set()
 
-def thread_loop(
-    serial: Serial,
-    stop: Event,
-    manager: AnimationManager,
-    manager_lock: Lock,
-    timer_period=float,
-):
-    while not stop.is_set():
-        with manager_lock:
-            led1, led2 = manager.next_value()
-
-        serial.write(f"$LED:{led1},0,0,0,{led2}\r\n".encode("utf-8"))
-        time.sleep(timer_period)
