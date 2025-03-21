@@ -9,7 +9,6 @@ GetOptions(\%args, "package-list=s@");
 
 my @toplevelPkgs = @ARGV;
 
-
 my %packages;
 
 foreach my $list (@{$args{"package-list"}}) {
@@ -18,17 +17,17 @@ foreach my $list (@{$args{"package-list"}}) {
     print STDERR "parsing $packagesFile\n";
 
     # Parse the Packages file.
-    open PACKAGES, "<$packagesFile" or die;
+    open(my $packagesFh, '<', $packagesFile) or die;
 
     while (1) {
-        my $cdata = Dpkg::Control->new(type => CTRL_INFO_PKG);
-        last if not $cdata->parse(\*PACKAGES, $packagesFile);
+        my $cdata = Dpkg::Control->new(type => CTRL_TMPL_PKG);
+        last if not $cdata->parse($packagesFh, $packagesFile);
         die unless defined $cdata->{Package};
         # print STDERR $cdata->{Package}, "\n";
         $packages{$cdata->{Package}} = { cdata => $cdata, urlPrefix => $urlPrefix };
     }
 
-    close PACKAGES;
+    close $packagesFh;
 }
 
 # Flatten a Dpkg::Deps dependency value into a list of package names.
@@ -50,7 +49,6 @@ sub getDeps {
         die "unknown dep type";
     }
 }
-
 
 # Process the "Provides" and "Replaces" fields to be able to resolve
 # virtual dependencies.
@@ -80,6 +78,7 @@ foreach my $package (sort {$a->{cdata}->{Package} cmp $b->{cdata}->{Package}} (v
 # Determine the closure of a package.
 my %donePkgs;
 my %depsUsed;
+my %preDepsUsed;
 my @order = ();
 
 sub closePackage {
@@ -105,6 +104,19 @@ sub closePackage {
         }
     }
 
+    my @preDepNames = ();
+
+    if (defined $cdata->{'Pre-Depends'}) {
+        print STDERR "    $pkgName: $cdata->{'Pre-Depends'}\n";
+        my $deps = Dpkg::Deps::deps_parse($cdata->{'Pre-Depends'});
+        die unless defined $deps;
+        push @preDepNames, getDeps($deps);
+    }
+
+    foreach my $preDepName (@preDepNames) {
+        closePackage($preDepName);
+    }
+
     my @depNames = ();
 
     if (defined $cdata->{Depends}) {
@@ -114,18 +126,12 @@ sub closePackage {
         push @depNames, getDeps($deps);
     }
 
-    if (defined $cdata->{'Pre-Depends'}) {
-        print STDERR "    $pkgName: $cdata->{'Pre-Depends'}\n";
-        my $deps = Dpkg::Deps::deps_parse($cdata->{'Pre-Depends'});
-        die unless defined $deps;
-        push @depNames, getDeps($deps);
-    }
-
     foreach my $depName (@depNames) {
         closePackage($depName);
     }
 
     push @order, $pkgName;
+    $preDepsUsed{$pkgName} = \@preDepNames;
     $depsUsed{$pkgName} = \@depNames;
 }
 
@@ -133,31 +139,39 @@ foreach my $pkgName (@toplevelPkgs) {
     closePackage $pkgName;
 }
 
-
 # Generate the output Nix expression.
 print "# This is a generated file.  Do not modify!\n";
 print "# Following are the Debian packages constituting the closure of: @toplevelPkgs\n\n";
 print "{fetchurl}:\n\n";
 print "[\n\n";
+print "  [\n\n";
 
 # Output the packages in strongly connected components.
 my %done;
-my %forward;
-my $newComponent = 1;
+my %currentComponent;
+my $newComponent = 0;
 foreach my $pkgName (@order) {
-    $done{$pkgName} = 1;
     my $package = $packages{$pkgName};
     my $cdata = $package->{cdata};
     my $urlPrefix = $package->{urlPrefix};
-    my @deps = @{$depsUsed{$pkgName}};
-    foreach my $dep (@deps) {
-        $dep = $provides{$dep} if defined $provides{$dep};
-        $forward{$dep} = 1 unless defined $done{$dep};
-    }
-    delete $forward{$pkgName};
+    my @preDeps = @{$preDepsUsed{$pkgName}};
 
-    print "  [\n\n" if $newComponent;
-    $newComponent = 0;
+    foreach my $preDep (@preDeps) {
+        $preDep = $provides{$preDep} if defined $provides{$preDep};
+        next if defined $done{$preDep};
+        $newComponent = 1;
+        last;
+    }
+
+    if ($newComponent) {
+        print "  ]\n\n";
+        print "  [\n\n";
+        $newComponent = 0;
+        @done{keys %currentComponent} = values %currentComponent;
+        %currentComponent = ();
+    }
+
+    $currentComponent{$pkgName} = 1;
 
     my $origName = basename $cdata->{Filename};
     my $cleanedName = $origName;
@@ -169,16 +183,7 @@ foreach my $pkgName (@order) {
     print "      name = \"$cleanedName\";\n" if $cleanedName ne $origName;
     print "    })\n";
     print "\n";
-
-    if (keys %forward == 0) {
-        print "  ]\n\n";
-        $newComponent = 1;
-    }
 }
 
+print "  ]\n\n";
 print "]\n";
-
-if ($newComponent != 1) {
-    print STDERR "argh: ", keys %forward, "\n";
-    exit 1;
-}
