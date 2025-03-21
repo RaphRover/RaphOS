@@ -1,3 +1,22 @@
+0.4.1
+-----------
+* Moved Insta camera position in URDF 90mm up the Z axis.
+* Fixed IMU orientation in URDF (was rotated 180 degrees around the Z axis).
+* Fixed a bug in Sony Cr Wrapper which leaked memory on each photo taken and caused it to freeze after >100 photos.
+* Updated UI favicon.
+
+0.4.0
+-----------
+* Revised blade side labeling for the Sony and Oak cameras to follow the new specification.
+* Fixed an issue which resulted in data not being recorded to bag files while the insta360 photos were being processed.
+* Added current LED settings and gimbal encoder data to recorded bags and inspection files.
+* Added a filter that removes some of the "phantom" lidar points that are reflected from the lidar cage.
+* Added input field for setting arbitrary values for control manager distance in the `Settings` panel. Also increased max value on the slider to 1.5m.
+* Added beacon status monitoring. The WebUI will now display a notification when the beacon stops measuring distance and a warning will pop out when trying to start inspection when beacon is not working.
+* Added an option to set manual aperture (F-Number) for the Sony camera. This can be set in the `Settings` panel in the WebUI. The slider allows choosing values from standard full-stop f-number scale. The input field allows putting arbitrary values (useful for lens supporting one-half-stop, one-third-stop, etc.).
+* Added "Reboot gimbal" button to service menu.
+* Some stability fixes to Beacon wrapper and Led wrapper nodes.
+
 0.3.0
 -----------
 * The bootstrapper will now display the OS flashing procedure status using bottom LED panels. The 3 displayed states include:
