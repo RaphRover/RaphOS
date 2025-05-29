@@ -83,12 +83,14 @@ let
     }
   ];
 
-  # Packages that provide programs needed to install other packages
-  debs-unpack-closure = import (tools.debClosureGenerator {
-    name = "debs-unpack-closure";
+  debsClosure = import (tools.debClosureGenerator {
+    name = "debs-closure";
     inherit packageLists;
     packages = [
+      # STAGE 0 - predependencies
+      "base-passwd"
       "base-files"
+      "init-system-helpers"
       "dpkg"
       "libc-bin"
       "dash"
@@ -97,17 +99,10 @@ let
       "sed"
       "debconf"
       "perl"
-    ];
-  }) { inherit fetchurl; };
 
-  debs_unpack = pkgs.runCommand "debs-unpack" { } ''
-    echo "${toString debs-unpack-closure}" > $out
-  '';
+      "---"
 
-  debs-install-closure = import (tools.debClosureGenerator {
-    name = "debs-install-closure";
-    inherit packageLists;
-    packages = [
+      # STAGE 1
       "base-passwd"
       "init-system-helpers"
       "grep"
@@ -162,6 +157,10 @@ let
       "networkd-dispatcher" # Networkd hooks
       "nginx" # Web server
 
+      # Added here to fix a problem with deb closure generator which cannot properly
+      # resolve dependencies like "python3-distro (>= 1.4.0) | python3 (<< 3.8)"
+      "python3-distro"
+
       # Configures sources for ROS 2 repo
       "ros2-apt-source"
 
@@ -207,12 +206,18 @@ let
     ];
   }) { inherit fetchurl; };
 
-  debs_install = pkgs.runCommand "debs-install" { } ''
-    echo "${toString (lib.intersperse "|" debs-install-closure)}" > $out
-  '';
+  exportStage = stageNr:
+    pkgs.runCommand "debs-stage${toString stageNr}" { } ''
+      echo "${
+        toString (lib.intersperse "|" (builtins.elemAt debsClosure stageNr))
+      }" > $out
+    '';
+
+  debsStage0 = exportStage 0;
+  debsStage1 = exportStage 1;
 
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit OSName debs_unpack debs_install;
+  inherit OSName debsStage0 debsStage1;
 
   pname = "${OSName}-image";
   version = OSVersion;
@@ -236,6 +241,6 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
   buildCommand = ''
     ${scripts}/build.sh
     mkdir -p "$out/nix-support"
-    echo ${toString [ debs_unpack debs_install ]} > $out/nix-support/deb-inputs
+    echo ${toString [ debsStage0 debsStage1 ]} > $out/nix-support/deb-inputs
   '';
 })

@@ -4,6 +4,8 @@ use Dpkg::Deps;
 use File::Basename;
 use Getopt::Long;
 
+use constant STAGE_SEPARATOR => "---";
+
 my %args = ();
 GetOptions(\%args, "package-list=s@");
 
@@ -32,17 +34,23 @@ foreach my $list (@{$args{"package-list"}}) {
 
 # Flatten a Dpkg::Deps dependency value into a list of package names.
 sub getDeps {
-    my $deps = shift;
-    #print "$deps\n";
+    my ($deps, $donePkgs) = @_;
     if ($deps->isa('Dpkg::Deps::AND')) {
         my @res = ();
         foreach my $dep ($deps->get_deps()) {
-            push @res, getDeps($dep);
+            push @res, getDeps($dep, $donePkgs);
         }
         return @res;
     } elsif ($deps->isa('Dpkg::Deps::OR')) {
-        # Arbitrarily pick the first alternative.
-        return getDeps(($deps->get_deps())[0]);
+        # Prefer already installed/scheduled alternatives
+        foreach my $dep ($deps->get_deps()) {
+            my @names = getDeps($dep, $donePkgs);
+            foreach my $name (@names) {
+                return ($name) if exists $donePkgs->{$name};
+            }
+        }
+        # Otherwise, pick the first alternative
+        return getDeps(($deps->get_deps())[0], $donePkgs);
     } elsif ($deps->isa('Dpkg::Deps::Simple')) {
         return ($deps->{package});
     } else {
@@ -57,7 +65,7 @@ my %provides;
 foreach my $package (sort {$a->{cdata}->{Package} cmp $b->{cdata}->{Package}} (values %packages)) {
     my $cdata = $package->{cdata};
     if (defined $cdata->{Provides}) {
-        my @provides = getDeps(Dpkg::Deps::deps_parse($cdata->{Provides}));
+        my @provides = getDeps(Dpkg::Deps::deps_parse($cdata->{Provides}), {});
         foreach my $name (@provides) {
             #die "conflicting provide: $name\n" if defined $provides{$name};
             #warn "provide by $cdata->{Package} conflicts with package with the same name: $name\n";
@@ -67,7 +75,7 @@ foreach my $package (sort {$a->{cdata}->{Package} cmp $b->{cdata}->{Package}} (v
     }
     # Treat "Replaces" like "Provides".
     if (defined $cdata->{Replaces}) {
-        my @replaces = getDeps(Dpkg::Deps::deps_parse($cdata->{Replaces}));
+        my @replaces = getDeps(Dpkg::Deps::deps_parse($cdata->{Replaces}), {});
         foreach my $name (@replaces) {
             next if defined $packages{$name};
             $provides{$name} = $cdata->{Package};
@@ -77,7 +85,6 @@ foreach my $package (sort {$a->{cdata}->{Package} cmp $b->{cdata}->{Package}} (v
 
 # Determine the closure of a package.
 my %donePkgs;
-my %depsUsed;
 my %preDepsUsed;
 my @order = ();
 
@@ -99,8 +106,9 @@ sub closePackage {
     $donePkgs{$pkgName} = 1;
 
     if (defined $cdata->{Provides}) {
-        foreach my $name (getDeps(Dpkg::Deps::deps_parse($cdata->{Provides}))) {
+        foreach my $name (getDeps(Dpkg::Deps::deps_parse($cdata->{Provides}), \%donePkgs)) {
             $provides{$name} = $cdata->{Package};
+            $donePkgs{$name} = 1;
         }
     }
 
@@ -110,7 +118,7 @@ sub closePackage {
         print STDERR "    $pkgName: $cdata->{'Pre-Depends'}\n";
         my $deps = Dpkg::Deps::deps_parse($cdata->{'Pre-Depends'});
         die unless defined $deps;
-        push @preDepNames, getDeps($deps);
+        push @preDepNames, getDeps($deps, \%donePkgs);
     }
 
     foreach my $preDepName (@preDepNames) {
@@ -123,7 +131,7 @@ sub closePackage {
         print STDERR "    $pkgName: $cdata->{Depends}\n";
         my $deps = Dpkg::Deps::deps_parse($cdata->{Depends});
         die unless defined $deps;
-        push @depNames, getDeps($deps);
+        push @depNames, getDeps($deps, \%donePkgs);
     }
 
     foreach my $depName (@depNames) {
@@ -132,10 +140,13 @@ sub closePackage {
 
     push @order, $pkgName;
     $preDepsUsed{$pkgName} = \@preDepNames;
-    $depsUsed{$pkgName} = \@depNames;
 }
 
 foreach my $pkgName (@toplevelPkgs) {
+    if ($pkgName eq STAGE_SEPARATOR) {
+        push @order, $pkgName;
+        next;
+    }
     closePackage $pkgName;
 }
 
@@ -145,12 +156,23 @@ print "# Following are the Debian packages constituting the closure of: @topleve
 print "{fetchurl}:\n\n";
 print "[\n\n";
 print "  [\n\n";
+print "    [\n\n";
 
 # Output the packages in strongly connected components.
 my %done;
 my %currentComponent;
 my $newComponent = 0;
 foreach my $pkgName (@order) {
+    if ($pkgName eq STAGE_SEPARATOR) {
+        print "    ]\n\n";
+        print "  ]\n\n";
+        print "  [\n\n";
+        print "    [\n\n";
+        @done{keys %currentComponent} = values %currentComponent;
+        %currentComponent = ();
+        next;
+    }
+
     my $package = $packages{$pkgName};
     my $cdata = $package->{cdata};
     my $urlPrefix = $package->{urlPrefix};
@@ -164,8 +186,8 @@ foreach my $pkgName (@order) {
     }
 
     if ($newComponent) {
-        print "  ]\n\n";
-        print "  [\n\n";
+        print "    ]\n\n";
+        print "    [\n\n";
         $newComponent = 0;
         @done{keys %currentComponent} = values %currentComponent;
         %currentComponent = ();
@@ -185,5 +207,6 @@ foreach my $pkgName (@order) {
     print "\n";
 }
 
+print "    ]\n\n";
 print "  ]\n\n";
 print "]\n";
