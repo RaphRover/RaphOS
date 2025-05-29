@@ -162,6 +162,9 @@ let
       "networkd-dispatcher" # Networkd hooks
       "nginx" # Web server
 
+      # Configures sources for ROS 2 repo
+      "ros2-apt-source"
+
       # ROS build tools
       "ros-dev-tools"
       "python3-colcon-common-extensions"
