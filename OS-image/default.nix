@@ -25,9 +25,9 @@ let
   scripts = pkgs.callPackage ./scripts { inherit files; };
 
   packageLists = let
-    noble-updates-stamp = "20250321T120000Z";
-    ros2-stamp = "2025-01-20";
-    fictionlab-stamp = "2024-07-22";
+    noble-updates-stamp = "20250529T120000Z";
+    ros2-stamp = "2025-04-30";
+    fictionlab-stamp = "2025-05-19";
   in [
     {
       name = "noble-main";
@@ -50,7 +50,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-        sha256 = "sha256-WtDuyI0wf8KxzCNFtoPwqio5QMAK/YaL/f7uFjQH1A4=";
+        sha256 = "sha256-myf+XHunoDO9TuyyRzxgJcNm9yYqQnpJmWf/F/9zoq4=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -59,7 +59,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
-        sha256 = "sha256-Myrfr+ChTxAiWSyyhVJiF8YmTUvtki6rIpxKPG9wz9c=";
+        sha256 = "sha256-2NN94A4nAexjn6bNxvk5GHIuT6kFVLwx0nbaKqeihE0=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -68,7 +68,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
-        sha256 = "sha256-oCoKPBQKAwYMQ4tzPWEMOaQ5ZiJ82TLDPGrwUw3fr6I=";
+        sha256 = "sha256-e6f0jsqjDLxaSPLvVXYIl3FRNYCCnkigLRrpIhsfacM=";
       });
       urlPrefix = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu";
     }
@@ -76,10 +76,10 @@ let
       name = "fictionlab";
       packagesFile = (fetchurl {
         url =
-          "http://files.fictionlab.pl/repo/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-6Xp5LlgN/V7sownWX0a5ePgnknEqjlA45684hms8pEo=";
+          "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
+        sha256 = "sha256-sUEm9kPAGgJlB6DLmNCbpeHHM8x9FKzUAodSqBur7zs=";
       });
-      urlPrefix = "http://files.fictionlab.pl/repo";
+      urlPrefix = "https://archive.fictionlab.pl";
     }
   ];
 
