@@ -1,3 +1,15 @@
+Forthcoming
+-----------
+* New button mapping for the Steam Deck controller.
+    * L1 is no longer gimbal deadmans' switch. Instead, it switches between driving mode and gimbal mode. In Gimbal mode left joystick serves as steering for the gimbal, in Driving mode left joystick serves as forward and reverse for the robot.
+    * R2 now triggers photos - in gimbal mode it triggers only Sony ILX photo, in driving mode it triggers photos with all cameras.
+* Auto switch between "Centerline view" and "Gimbal control" sidebar modes when switching between driving and gimbal modes.
+* Fixed an issue with infinite loading toasts when clicking a button for homing the gimbal.
+* Limited number of toasts displayed in the WebUI to 7 at a time.
+* Added "Dismiss all toasts" button to the Service menu.
+* Reversed IMU roll and pitch axes in the WebUI to adhere to the right-hand rule convention.
+* Updated system packages to the latest versions.
+
 0.4.1
 -----------
 * Moved Insta camera position in URDF 90mm up the Z axis.
