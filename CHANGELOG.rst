@@ -1,4 +1,4 @@
-Forthcoming
+0.5.0
 -----------
 * New button mapping for the Steam Deck controller.
     * L1 is no longer gimbal deadmans' switch. Instead, it switches between driving mode and gimbal mode. In Gimbal mode left joystick serves as steering for the gimbal, in Driving mode left joystick serves as forward and reverse for the robot.
@@ -32,6 +32,7 @@ Forthcoming
 0.3.0
 -----------
 * The bootstrapper will now display the OS flashing procedure status using bottom LED panels. The 3 displayed states include:
+
     1. Left and right panels blinking alternately - the flashing procedure will start in 5 seconds.
     2. Both panels breathing - the flashing procedure is in progress.
     3. Both panels blinking in short bursts - the flashing procedure has finished, unplug the USB drive.
