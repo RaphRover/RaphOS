@@ -9,7 +9,7 @@
       pkgs = (import nixpkgs) { inherit system; };
 
       OSName = "IbisOS";
-      OSVersion = "0.5.0";
+      OSVersion = "0.5.1";
 
       OSImage = pkgs.callPackage ./OS-image { inherit OSName OSVersion; };
 

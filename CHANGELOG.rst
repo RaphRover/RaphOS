@@ -1,3 +1,8 @@
+0.5.1
+-----------
+* Fixed an issue which caused gimbal velocity commands to not be published.
+* Added a safeguard to set gimbal velocity to zero when disabling gimbal control mode.
+
 0.5.0
 -----------
 * New button mapping for the Steam Deck controller.
