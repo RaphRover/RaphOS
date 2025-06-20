@@ -125,6 +125,8 @@ colcon build --event-handlers desktop_notification- status- terminal_title- --cm
 # Enable user services
 systemctl --user enable ros-nodes
 systemctl --user enable uros-agent
+systemctl --user enable discovery-server
+systemctl --user enable ros.target
 CHROOT
 
 # Enable lingering for default user

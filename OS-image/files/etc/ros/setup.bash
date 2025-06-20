@@ -24,9 +24,14 @@ LAUNCH_ARGS=""
 # Arguments passed to Micro-ROS agent
 UROS_AGENT_ARGS="udp4 -d -p 8888"
 
+# The ID of the discovery server.
+DISCOVERY_SERVER_ID=0
+
 
 ### ROS Environment Variables
 
 #export ROS_DOMAIN_ID=10
 #export ROS_LOCALHOST_ONLY=1
 export RCUTILS_COLORIZED_OUTPUT=1
+export ROS_DISCOVERY_SERVER="127.0.0.1:11811;10.10.1.2:11811"
+export ROS_SUPER_CLIENT=true
