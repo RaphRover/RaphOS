@@ -1,8 +1,8 @@
 #!/bin/sh -e
 
 # Configuration
-FIRST_USER_NAME=ibis
-FIRST_USER_PASS=ibis
+USER_NAME=ibis
+USER_PASS=ibis
 TARGET_HOSTNAME=ibis
 
 my_chroot() {
@@ -102,20 +102,25 @@ ln -vs /etc/nginx/sites-available/ibis_ui /mnt/etc/nginx/sites-enabled/ibis_ui
 
 my_chroot /mnt /bin/bash -exuo pipefail <<CHROOT
 # Create default user
-if ! id -u ${FIRST_USER_NAME} >/dev/null 2>&1; then
-	adduser --disabled-password --gecos "" ${FIRST_USER_NAME}
-fi
-echo "${FIRST_USER_NAME}:${FIRST_USER_PASS}" | chpasswd
+adduser --disabled-password --comment "" ${USER_NAME}
+
+# Set the default user password
+echo "${USER_NAME}:${USER_PASS}" | chpasswd
+
+# Add the default user to different groups
 for GRP in adm dialout audio sudo video plugdev input; do
-    adduser $FIRST_USER_NAME "\${GRP}"
+    adduser $USER_NAME "\${GRP}"
 done
 
 # Allow nginx to serve files from the home directory
-usermod -a -G ${FIRST_USER_NAME} www-data
+usermod -a -G ${USER_NAME} www-data
+
+# Do the rest of the commands as the default user
+su - ${USER_NAME}
+set -ex
 
 # Build IBIS packages
-su - ${FIRST_USER_NAME}
-cd /home/ibis
+cd /home/${USER_NAME}
 mkdir -p ros_ws/src
 cp -vr /inst${ibis_ros_src}/. ros_ws/src/ibis_ros
 cd ros_ws
@@ -131,10 +136,10 @@ CHROOT
 
 # Enable lingering for default user
 mkdir -p -m 755 "/mnt/var/lib/systemd/linger"
-touch "/mnt/var/lib/systemd/linger/${FIRST_USER_NAME}"
+touch "/mnt/var/lib/systemd/linger/${USER_NAME}"
 
 # Automatically source our setup when user logs in to bash shell
-echo -e "\nsource /etc/ros/setup.bash" >> "/mnt/home/${FIRST_USER_NAME}/.bashrc"
+echo -e "\nsource /etc/ros/setup.bash" >> "/mnt/home/${USER_NAME}/.bashrc"
 
 # update-grub needs udev to detect the filesystem UUID -- without,
 # we'll get root=/dev/vda2 on the cmdline which will only work in
