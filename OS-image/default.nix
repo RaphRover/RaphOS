@@ -151,7 +151,7 @@ let
       "iproute2" # ip cli utilities
       "iputils-ping" # ping utility
       "systemd-resolved" # DNS resolver
-      "systemd-timesyncd" # SNTP client
+      "chrony" # SNTP client and server
       "avahi-daemon" # mDNS support
       "openssh-server" # Remote login
       "networkd-dispatcher" # Networkd hooks
