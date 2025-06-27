@@ -183,6 +183,7 @@ let
       "ros-jazzy-cv-bridge"
       "ros-jazzy-depthai"
       "ros-jazzy-depthai-bridge"
+      "ros-jazzy-diagnostic-aggregator"
       "ros-jazzy-generate-parameter-library"
       "ros-jazzy-imu-complementary-filter"
       "ros-jazzy-mavlink"
