@@ -123,9 +123,11 @@ set -ex
 cd /home/${USER_NAME}
 mkdir -p ros_ws/src
 cp -vr /inst${ibis_ros_src}/. ros_ws/src/ibis_ros
+chmod -R u+w ros_ws/src/ibis_ros
 cd ros_ws
 source /opt/ros/jazzy/setup.bash
-colcon build --event-handlers desktop_notification- status- terminal_title- --cmake-args -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
+colcon build --event-handlers desktop_notification- status- terminal_title- console_cohesion+ \
+  --cmake-args -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
 
 # Enable user services
 systemctl --user enable ros-nodes

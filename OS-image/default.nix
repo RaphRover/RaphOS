@@ -20,6 +20,12 @@ let
     '';
   };
 
+  ibis_ros_src = builtins.fetchGit {
+    url = "git@github.com:fictionlab-ibis/ibis_ros.git";
+    rev = "dc2d9841feb23bd44fdf7f4d45db174bb5e01c18";
+    submodules = true;
+  };
+
   files = pkgs.callPackage ./files { inherit OSName OSVersion ibis_ui; };
 
   scripts = pkgs.callPackage ./scripts { inherit files; };
@@ -203,6 +209,9 @@ let
       "python3-piexif"
       "python3-serial"
       "python3-yaml"
+
+      # We need a second rmw implementation for the custom rmw_implementation package to not skip building
+      "ros-jazzy-rmw-fastrtps-dynamic-cpp"
     ];
   }) { inherit fetchurl; };
 
@@ -217,18 +226,12 @@ let
   debsStage1 = exportStage 1;
 
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit OSName debsStage0 debsStage1;
+  inherit OSName debsStage0 debsStage1 ibis_ros_src;
 
   pname = "${OSName}-image";
   version = OSVersion;
 
   memSize = 4096;
-
-  ibis_ros_src = builtins.fetchGit {
-    url = "git@github.com:fictionlab-ibis/ibis_ros.git";
-    rev = "8973104f64a750c202a374620a96f91ae637bdba";
-    submodules = true;
-  };
 
   preVM = ''
     mkdir -p $out
