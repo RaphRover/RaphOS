@@ -22,7 +22,7 @@ let
 
   ibis_ros_src = builtins.fetchGit {
     url = "git@github.com:fictionlab-ibis/ibis_ros.git";
-    rev = "dc2d9841feb23bd44fdf7f4d45db174bb5e01c18";
+    rev = "59ad32e50a901f079f955ba1587df278f8bd24f4";
     submodules = true;
   };
 
