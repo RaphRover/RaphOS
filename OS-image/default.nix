@@ -7,12 +7,12 @@ let
 
   ibis_ui = buildNpmPackage {
     pname = "ibis_ui";
-    version = "1.6.0";
+    version = "2.0.0";
     src = builtins.fetchGit {
       url = "git@github.com:fictionlab-ibis/ibis_ui.git";
-      rev = "602575744d31b5952625422e9946cd4e5781e250";
+      rev = "a259473edff9ed3a9548e73bc4416a460dfe26ae";
     };
-    npmDepsHash = "sha256-VMAu/OvLF1N2fMJRJ3NedZqF/UQ2q0fHAjWxURvhcKI=";
+    npmDepsHash = "sha256-cTLJIlBZTGu7Q4LznKpplwkokvU6uuz4fv6hVfBmJoM=";
     makeCacheWritable = true;
     installPhase = ''
       mkdir $out
