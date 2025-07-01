@@ -1,7 +1,17 @@
+1.0.0
+-----------
+* Reconfigured the ROS network to use the Fast DDS discovery server to discover the nodes in the network. This allows the nodes to be discovered even if they are not on the same subnet. **WARNING**: This is a breaking change and will prevent the tether controller from working with the current network configuration on the base station.
+* Added an NTP server to serve the local time to the tether controller so the timestamps are consistent across the system.
+* Added component status monitoring. A newly added `ibis_status` node monitors the activity of the other nodes in the system and reports their status to the WebUI.
+* The WebUI will now attempt to reconnect to the tether if the initial connection fails. No need to refresh the page.
+* Added `tether_state` topic to the list of topics recorded in the rosbags by the inspection manager.
+* Configured all nodes to respawn automatically if they crash (5 times before giving up). This should improve the system stability.
+* Gremsy wrapper node will now detect if the gimbal is disconnected and will try to reconnect to it automatically.
+
 0.5.1
 -----------
 * Fixed an issue which caused gimbal velocity commands to not be published.
-* Added a safeguard to set gimbal velocity to zero when disabling gimbal control mode.
+* Added a safeguard which sets gimbal velocity to zero when disabling gimbal control mode.
 
 0.5.0
 -----------
