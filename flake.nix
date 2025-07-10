@@ -1,5 +1,5 @@
 {
-  description = "A flake to build a basic NixOS iso";
+  description = "A flake to build a RaphOS bootstrapper and OS image";
 
   inputs = { nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable"; };
 
@@ -8,11 +8,14 @@
       system = "x86_64-linux";
       pkgs = (import nixpkgs) { inherit system; };
 
-      RaphaOS-image = pkgs.callPackage ./RaphaOS-image { };
+      OSName = "RaphOS";
+      OSVersion = "1.0.0";
+
+      OSImage = pkgs.callPackage ./OS-image { inherit OSName OSVersion; };
 
       bootstrapper = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit inputs RaphaOS-image; };
+        specialArgs = { inherit inputs OSName OSImage OSVersion; };
         modules = [ ./bootstrapper-config ];
       };
 
@@ -20,7 +23,7 @@
       nixosConfigurations = { inherit bootstrapper; };
 
       packages.${system} = {
-        inherit RaphaOS-image;
+        inherit OSImage;
         default = bootstrapper.config.system.build.isoImage;
       };
 
