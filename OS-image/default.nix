@@ -1,62 +1,12 @@
-{ lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, closureInfo, ... }:
+{ OSName, OSVersion, lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, ... }:
 let
-  name = "RaphaOS";
-  size = 8192;
+  imageSize = 8192;
 
   tools = import ./tools.nix { inherit lib pkgs; };
 
-  files = let
-    ros-archive-keyring = (fetchurl {
-      url = "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key";
-      sha256 = "sha256-OkyNWeOg+7Ks8ziZS2ECxbqhcHHEzJf1ILSCppf4pP4=";
-    });
-    fictionlab-archive-keyring = (fetchurl {
-      url = "https://files.fictionlab.pl/repo/fictionlab.gpg";
-      sha256 = "sha256-noqi5NcMDrnwMp9JFVUrLJkH65WH9/EDISQIVT8Hnf8=";
-    });
-  in stdenv.mkDerivation {
-    name = "files";
-    src = ./files;
-    phases = [ "unpackPhase" "installPhase" ];
-    installPhase = ''
-      mkdir -p $out
-      cp -vr $src/* $out
+  files = pkgs.callPackage ./files { inherit OSName OSVersion; };
 
-      mkdir -p $out/usr/share/keyrings
-      cp -v ${ros-archive-keyring} $out/usr/share/keyrings/ros-archive-keyring.gpg
-      cp -v ${fictionlab-archive-keyring} $out/usr/share/keyrings/fictionlab-archive-keyring.gpg
-    '';
-  };
-
-  scripts = stdenv.mkDerivation {
-    name = "scripts";
-    src = ./scripts;
-    nativeBuildInputs = [ makeWrapper ];
-    phases = [ "unpackPhase" "installPhase" "postFixup" ];
-    installPhase = ''
-      mkdir -p $out
-      cp -vr $src/* $out
-    '';
-    postFixup = ''
-      wrapProgram $out/build.sh \
-      --set PATH "${
-        with pkgs;
-        lib.makeBinPath [
-          gptfdisk
-          util-linux
-          dosfstools
-          e2fsprogs
-          dpkg
-          coreutils
-          gnutar
-          systemd
-        ]
-      }" \
-      --set FILES_DIR ${files} \
-      --set NIX_STORE_DIR ${builtins.storeDir} \
-      --set UDEVD "${pkgs.systemd}/lib/systemd/systemd-udevd"
-    '';
-  };
+  scripts = pkgs.callPackage ./scripts { inherit files; };
 
   packageLists = let
     noble-updates-stamp = "20240828T160000Z";
