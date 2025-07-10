@@ -4,11 +4,12 @@ use Dpkg::Deps;
 use File::Basename;
 use Getopt::Long;
 
+use constant STAGE_SEPARATOR => "---";
+
 my %args = ();
 GetOptions(\%args, "package-list=s@");
 
 my @toplevelPkgs = @ARGV;
-
 
 my %packages;
 
@@ -18,39 +19,44 @@ foreach my $list (@{$args{"package-list"}}) {
     print STDERR "parsing $packagesFile\n";
 
     # Parse the Packages file.
-    open PACKAGES, "<$packagesFile" or die;
+    open(my $packagesFh, '<', $packagesFile) or die;
 
     while (1) {
-        my $cdata = Dpkg::Control->new(type => CTRL_INFO_PKG);
-        last if not $cdata->parse(\*PACKAGES, $packagesFile);
+        my $cdata = Dpkg::Control->new(type => CTRL_TMPL_PKG);
+        last if not $cdata->parse($packagesFh, $packagesFile);
         die unless defined $cdata->{Package};
         # print STDERR $cdata->{Package}, "\n";
         $packages{$cdata->{Package}} = { cdata => $cdata, urlPrefix => $urlPrefix };
     }
 
-    close PACKAGES;
+    close $packagesFh;
 }
 
 # Flatten a Dpkg::Deps dependency value into a list of package names.
 sub getDeps {
-    my $deps = shift;
-    #print "$deps\n";
+    my ($deps, $donePkgs) = @_;
     if ($deps->isa('Dpkg::Deps::AND')) {
         my @res = ();
         foreach my $dep ($deps->get_deps()) {
-            push @res, getDeps($dep);
+            push @res, getDeps($dep, $donePkgs);
         }
         return @res;
     } elsif ($deps->isa('Dpkg::Deps::OR')) {
-        # Arbitrarily pick the first alternative.
-        return getDeps(($deps->get_deps())[0]);
+        # Prefer already installed/scheduled alternatives
+        foreach my $dep ($deps->get_deps()) {
+            my @names = getDeps($dep, $donePkgs);
+            foreach my $name (@names) {
+                return ($name) if exists $donePkgs->{$name};
+            }
+        }
+        # Otherwise, pick the first alternative
+        return getDeps(($deps->get_deps())[0], $donePkgs);
     } elsif ($deps->isa('Dpkg::Deps::Simple')) {
         return ($deps->{package});
     } else {
         die "unknown dep type";
     }
 }
-
 
 # Process the "Provides" and "Replaces" fields to be able to resolve
 # virtual dependencies.
@@ -59,7 +65,7 @@ my %provides;
 foreach my $package (sort {$a->{cdata}->{Package} cmp $b->{cdata}->{Package}} (values %packages)) {
     my $cdata = $package->{cdata};
     if (defined $cdata->{Provides}) {
-        my @provides = getDeps(Dpkg::Deps::deps_parse($cdata->{Provides}));
+        my @provides = getDeps(Dpkg::Deps::deps_parse($cdata->{Provides}), {});
         foreach my $name (@provides) {
             #die "conflicting provide: $name\n" if defined $provides{$name};
             #warn "provide by $cdata->{Package} conflicts with package with the same name: $name\n";
@@ -69,7 +75,7 @@ foreach my $package (sort {$a->{cdata}->{Package} cmp $b->{cdata}->{Package}} (v
     }
     # Treat "Replaces" like "Provides".
     if (defined $cdata->{Replaces}) {
-        my @replaces = getDeps(Dpkg::Deps::deps_parse($cdata->{Replaces}));
+        my @replaces = getDeps(Dpkg::Deps::deps_parse($cdata->{Replaces}), {});
         foreach my $name (@replaces) {
             next if defined $packages{$name};
             $provides{$name} = $cdata->{Package};
@@ -79,7 +85,7 @@ foreach my $package (sort {$a->{cdata}->{Package} cmp $b->{cdata}->{Package}} (v
 
 # Determine the closure of a package.
 my %donePkgs;
-my %depsUsed;
+my %preDepsUsed;
 my @order = ();
 
 sub closePackage {
@@ -100,9 +106,23 @@ sub closePackage {
     $donePkgs{$pkgName} = 1;
 
     if (defined $cdata->{Provides}) {
-        foreach my $name (getDeps(Dpkg::Deps::deps_parse($cdata->{Provides}))) {
+        foreach my $name (getDeps(Dpkg::Deps::deps_parse($cdata->{Provides}), \%donePkgs)) {
             $provides{$name} = $cdata->{Package};
+            $donePkgs{$name} = 1;
         }
+    }
+
+    my @preDepNames = ();
+
+    if (defined $cdata->{'Pre-Depends'}) {
+        print STDERR "    $pkgName: $cdata->{'Pre-Depends'}\n";
+        my $deps = Dpkg::Deps::deps_parse($cdata->{'Pre-Depends'});
+        die unless defined $deps;
+        push @preDepNames, getDeps($deps, \%donePkgs);
+    }
+
+    foreach my $preDepName (@preDepNames) {
+        closePackage($preDepName);
     }
 
     my @depNames = ();
@@ -111,14 +131,7 @@ sub closePackage {
         print STDERR "    $pkgName: $cdata->{Depends}\n";
         my $deps = Dpkg::Deps::deps_parse($cdata->{Depends});
         die unless defined $deps;
-        push @depNames, getDeps($deps);
-    }
-
-    if (defined $cdata->{'Pre-Depends'}) {
-        print STDERR "    $pkgName: $cdata->{'Pre-Depends'}\n";
-        my $deps = Dpkg::Deps::deps_parse($cdata->{'Pre-Depends'});
-        die unless defined $deps;
-        push @depNames, getDeps($deps);
+        push @depNames, getDeps($deps, \%donePkgs);
     }
 
     foreach my $depName (@depNames) {
@@ -126,38 +139,61 @@ sub closePackage {
     }
 
     push @order, $pkgName;
-    $depsUsed{$pkgName} = \@depNames;
+    $preDepsUsed{$pkgName} = \@preDepNames;
 }
 
 foreach my $pkgName (@toplevelPkgs) {
+    if ($pkgName eq STAGE_SEPARATOR) {
+        push @order, $pkgName;
+        next;
+    }
     closePackage $pkgName;
 }
-
 
 # Generate the output Nix expression.
 print "# This is a generated file.  Do not modify!\n";
 print "# Following are the Debian packages constituting the closure of: @toplevelPkgs\n\n";
 print "{fetchurl}:\n\n";
 print "[\n\n";
+print "  [\n\n";
+print "    [\n\n";
 
 # Output the packages in strongly connected components.
 my %done;
-my %forward;
-my $newComponent = 1;
+my %currentComponent;
+my $newComponent = 0;
 foreach my $pkgName (@order) {
-    $done{$pkgName} = 1;
+    if ($pkgName eq STAGE_SEPARATOR) {
+        print "    ]\n\n";
+        print "  ]\n\n";
+        print "  [\n\n";
+        print "    [\n\n";
+        @done{keys %currentComponent} = values %currentComponent;
+        %currentComponent = ();
+        next;
+    }
+
     my $package = $packages{$pkgName};
     my $cdata = $package->{cdata};
     my $urlPrefix = $package->{urlPrefix};
-    my @deps = @{$depsUsed{$pkgName}};
-    foreach my $dep (@deps) {
-        $dep = $provides{$dep} if defined $provides{$dep};
-        $forward{$dep} = 1 unless defined $done{$dep};
-    }
-    delete $forward{$pkgName};
+    my @preDeps = @{$preDepsUsed{$pkgName}};
 
-    print "  [\n\n" if $newComponent;
-    $newComponent = 0;
+    foreach my $preDep (@preDeps) {
+        $preDep = $provides{$preDep} if defined $provides{$preDep};
+        next if defined $done{$preDep};
+        $newComponent = 1;
+        last;
+    }
+
+    if ($newComponent) {
+        print "    ]\n\n";
+        print "    [\n\n";
+        $newComponent = 0;
+        @done{keys %currentComponent} = values %currentComponent;
+        %currentComponent = ();
+    }
+
+    $currentComponent{$pkgName} = 1;
 
     my $origName = basename $cdata->{Filename};
     my $cleanedName = $origName;
@@ -169,16 +205,8 @@ foreach my $pkgName (@order) {
     print "      name = \"$cleanedName\";\n" if $cleanedName ne $origName;
     print "    })\n";
     print "\n";
-
-    if (keys %forward == 0) {
-        print "  ]\n\n";
-        $newComponent = 1;
-    }
 }
 
+print "    ]\n\n";
+print "  ]\n\n";
 print "]\n";
-
-if ($newComponent != 1) {
-    print STDERR "argh: ", keys %forward, "\n";
-    exit 1;
-}
