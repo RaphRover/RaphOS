@@ -37,5 +37,5 @@ jobs:
         nix fmt -- -c .
     - name: Prepare cache
       run: |
-        nix build .#OS-image
+        nix build .#OSImage
         nix store gc
