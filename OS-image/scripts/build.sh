@@ -128,10 +128,19 @@ systemctl enable ssh ssh-generate-host-keys
 # Enable Networkd
 systemctl enable systemd-networkd
 
-# Set a password so we can log into the booted system
-echo root:root | chpasswd
-
+# Enable tmpfs on /tmp
+systemctl enable tmp.mount
 CHROOT
+
+# Remove backup files
+find "/mnt/etc" -type f -name "*-" -exec rm -v {} \;
+find "/mnt/var" -type f -name "*-old" -exec rm -v {} \;
+
+# Truncate all logs
+find "/mnt/var/log/" -type f -exec cp -v /dev/null {} \;
+
+# Clear up /run directory
+rm -v -rf "/mnt/run/"*
 
 umount /mnt/inst${NIX_STORE_DIR}
 umount /mnt/boot/efi
