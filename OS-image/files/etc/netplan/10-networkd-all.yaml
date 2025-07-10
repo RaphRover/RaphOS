@@ -1,4 +1,0 @@
-# Sets the default renderer to networkd
-network:
-  version: 2
-  renderer: networkd

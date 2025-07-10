@@ -1,0 +1,19 @@
+# Creates a bridge interface and adds ethernet interface to it.
+network:
+  version: 2
+  ethernets:
+    enp1s0:
+      renderer: networkd
+      optional: true
+  bridges:
+    br0:
+      renderer: networkd
+      interfaces: [ enp1s0 ]
+      addresses: [ 10.10.0.2/24 ]
+      routes:
+        - to: default
+          via: 10.10.0.1
+      nameservers:
+        addresses:
+          - 10.10.0.1
+      link-local: []
