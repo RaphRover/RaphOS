@@ -51,8 +51,7 @@
                 e2fsprogs
                 gptfdisk
                 inotify-tools
-                (python312Packages.python.withPackages
-                  (ps: [ ps.pyparted ]))
+                (python312Packages.python.withPackages (ps: [ ps.pyparted ]))
                 util-linuxMinimal
               ]
             } --set OS_IMG_FILE "${OSImage}/OS.img"
