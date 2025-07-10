@@ -1,4 +1,4 @@
-{ config, lib, pkgs, inputs, RaphaOS-image, ... }:
+{ OSName, OSImage, OSVersion, lib, pkgs, inputs, ... }:
 
 {
   imports = [
@@ -10,8 +10,9 @@
 
   time.timeZone = "Europe/London";
 
+  image.baseName = lib.mkForce "${OSName}-bootstrapper-${OSVersion}";
+
   isoImage = {
-    isoBaseName = "RaphaOS-Bootstrapper";
     makeBiosBootable = false;
     makeEfiBootable = true;
     squashfsCompression = "zstd";
@@ -44,8 +45,17 @@
         postFixup = ''
           wrapProgram $out/bin/install-os \
             --set PATH ${
-              lib.makeBinPath [ coreutils dmidecode gawk gnugrep ]
-            } --set OS_IMG_FILE "${RaphaOS-image}/RaphaOS.img"
+              lib.makeBinPath [
+                coreutils
+                dmidecode
+                e2fsprogs
+                gptfdisk
+                inotify-tools
+                (python312Packages.python.withPackages
+                  (ps: [ ps.pyparted ]))
+                util-linuxMinimal
+              ]
+            } --set OS_IMG_FILE "${OSImage}/OS.img"
         '';
       })
     ];
