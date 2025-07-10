@@ -13,14 +13,20 @@ stdenv.mkDerivation {
     --set PATH "${
       with pkgs;
       lib.makeBinPath [
-        gptfdisk
-        util-linux
-        dosfstools
-        e2fsprogs
-        dpkg
         coreutils
+        dosfstools
+        dpkg
+        e2fsprogs
+        findutils
+        gawk
+        gnugrep
+        gnused
         gnutar
+        gptfdisk
+        parted
         systemd
+        util-linux
+        zerofree
       ]
     }" \
     --set FILES_DIR ${files} \

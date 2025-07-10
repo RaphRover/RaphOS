@@ -188,4 +188,13 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
     mkdir -p "$out/nix-support"
     echo ${toString [ debsStage0 debsStage1 ]} > $out/nix-support/deb-inputs
   '';
+
+  postVM = ''
+    # Shrink the disk image
+    LAST_SECTOR=$(${pkgs.parted}/bin/parted $diskImage -ms unit s print | tail -n +3 | cut -d: -f3 | sed 's/s//' | sort -n | tail -1)
+    SECTOR_SIZE=512
+    DISK_SIZE=$(( (LAST_SECTOR + 1) * SECTOR_SIZE ))
+
+    ${pkgs.qemu_kvm}/bin/qemu-img resize --shrink -f raw $diskImage $DISK_SIZE
+  '';
 })
