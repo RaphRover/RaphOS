@@ -1,5 +1,10 @@
 #!/bin/sh -e
 
+# Configuration
+USER_NAME=raph
+USER_PASS=raph
+TARGET_HOSTNAME=raph
+
 my_chroot() {
     DEBIAN_FRONTEND=noninteractive \
     PATH=/usr/bin:/bin:/usr/sbin:/sbin \
@@ -26,6 +31,7 @@ mkdir -p /mnt/{proc,dev,sys,boot/efi}
 mount -t vfat "$DISK"1 /mnt/boot/efi
 mount -o bind /proc /mnt/proc
 mount -o bind /dev /mnt/dev
+mount -o bind /dev/pts /mnt/dev/pts
 mount -t sysfs sysfs /mnt/sys
 
 # Make the Nix store available in /mnt, because that's where the .debs live.
@@ -39,9 +45,13 @@ ln -s /usr/sbin /mnt/sbin
 ln -s /usr/lib /mnt/lib
 ln -s /usr/lib64 /mnt/lib64
 
-echo "Unpacking Debs..."
+DEBS_STAGE0_FILES=$(cat ${debsStage0})
+DEBS_STAGE1_FILES=$(cat ${debsStage1})
 
-for deb in ${debs_unpack}; do
+echo "Unpacking predependencies..."
+
+for deb in ${DEBS_STAGE0_FILES}; do
+    [ "$deb" = "|" ] && continue
     echo "$deb..."
     dpkg-deb --extract "$deb" /mnt
 done
@@ -50,7 +60,7 @@ echo "Installing Debs..."
 
 oldIFS="$IFS"
 IFS="|"
-for component in $debs; do
+for component in ${DEBS_STAGE0_FILES} ${DEBS_STAGE1_FILES}; do
     IFS="$oldIFS"
     echo
     echo ">>> INSTALLING COMPONENT: $component"
@@ -62,14 +72,38 @@ for component in $debs; do
     my_chroot /mnt dpkg --install $debs < /dev/null
 done
 
+# Remove redundant files
+rm -rf /mnt/etc/update-motd.d/*
+
 # Install configuration files
-cp -vr "${FILES_DIR}/"* /mnt/
+cp -vr --no-preserve=mode "${FILES_DIR}/"* /mnt/
+cp -v /mnt/usr/share/systemd/tmp.mount /mnt/etc/systemd/system/
+
+# Fix file permissions
+chmod +x /mnt/etc/update-motd.d/*
 
 # Symlink resolv.conf to systemd-resolved
 ln -vsnf /lib/systemd/resolv.conf /mnt/etc/resolv.conf
 
 # Remove SSH host keys
 rm /mnt/etc/ssh/ssh_host_*
+
+# Set hostname
+echo "${TARGET_HOSTNAME}" > "/mnt/etc/hostname"
+printf "\n127.0.1.1 ${TARGET_HOSTNAME}\n" >> "/mnt/etc/hosts"
+
+my_chroot /mnt /bin/bash -exuo pipefail <<CHROOT
+# Create default user
+adduser --disabled-password --comment "" ${USER_NAME}
+
+# Set the default user password
+echo "${USER_NAME}:${USER_PASS}" | chpasswd
+
+# Add the default user to different groups
+for GRP in adm dialout audio sudo video plugdev input; do
+    adduser $USER_NAME "\${GRP}"
+done
+CHROOT
 
 # update-grub needs udev to detect the filesystem UUID -- without,
 # we'll get root=/dev/vda2 on the cmdline which will only work in
@@ -103,5 +137,6 @@ umount /mnt/inst${NIX_STORE_DIR}
 umount /mnt/boot/efi
 umount /mnt/sys
 umount /mnt/proc
+umount /mnt/dev/pts
 umount /mnt/dev
 umount /mnt
