@@ -67,12 +67,14 @@ let
     }
   ];
 
-  # Packages that provide programs needed to install other packages
-  debs-unpack = import (tools.debClosureGenerator {
-    name = "debs-unpack";
+  debsClosure = import (tools.debClosureGenerator {
+    name = "debs-closure";
     inherit packageLists;
     packages = [
+      # STAGE 0 - predependencies
+      "base-passwd"
       "base-files"
+      "init-system-helpers"
       "dpkg"
       "libc-bin"
       "dash"
@@ -81,13 +83,10 @@ let
       "sed"
       "debconf"
       "perl"
-    ];
-  }) { inherit fetchurl; };
 
-  debs-install = import (tools.debClosureGenerator {
-    name = "debs-install";
-    inherit packageLists;
-    packages = [
+      "---"
+
+      # STAGE 1
       "base-passwd"
       "init-system-helpers"
       "grep"
@@ -114,49 +113,79 @@ let
       "less"
       "nano"
       "vim"
+      "sudo"
+      "dbus" # IPC used by various applications
+      "ncurses-base" # terminfo to let applications talk to terminals better
+      "bash-completion"
+      "htop"
 
+      # Boot stuff
       "systemd" # init system
       "systemd-sysv" # provides systemd as /sbin/init
+      "libpam-systemd" # makes systemd user sevices work
+      "policykit-1" # authorization manager for systemd
       "e2fsprogs" # initramfs wants fsck
       "zstd" # compress kernel using zstd
       "linux-image-generic" # kernel
       "grub-efi" # boot loader
       "initramfs-tools" # hooks for generating an initramfs
 
-      "ncurses-base" # terminfo to let applications talk to terminals better
+      # Networking stuff
+      "netplan.io" # network configuration utility
+      "iproute2" # ip cli utilities
+      "iputils-ping" # ping utility
+      "systemd-resolved" # DNS resolver
+      "chrony" # SNTP client and server
+      "avahi-daemon" # mDNS support
       "openssh-server" # Remote login
-      "dbus" # networkctl
+      "nginx" # Web server
 
-      "netplan.io"
-      "iproute2"
-      "iputils-ping"
-      "systemd-resolved"
-      "systemd-timesyncd"
+      # Added here to fix a problem with deb closure generator which cannot properly
+      # resolve dependencies like "python3-distro (>= 1.4.0) | python3 (<< 3.8)"
+      "python3-distro"
 
+      # Configures sources for ROS 2 repo
+      "ros2-apt-source"
+
+      # ROS build tools
+      "ros-dev-tools"
+      "python3-colcon-common-extensions"
+
+      # ROS base packages
       "ros-jazzy-ros-base"
       "ros-jazzy-micro-ros-agent"
-      "ros-jazzy-rapha-robot"
     ];
   }) { inherit fetchurl; };
 
-  debsClosure = closureInfo {
-    rootPaths = lib.lists.flatten (debs-unpack ++ debs-install);
-  };
+  exportStage = stageNr:
+    pkgs.runCommand "debs-stage${toString stageNr}" { } ''
+      echo "${
+        toString (lib.intersperse "|" (builtins.elemAt debsClosure stageNr))
+      }" > $out
+    '';
+
+  debsStage0 = exportStage 0;
+  debsStage1 = exportStage 1;
 
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit name size debsClosure;
+  inherit OSName debsStage0 debsStage1;
 
-  debs_unpack = debs-unpack;
+  pname = "${OSName}-image";
+  version = OSVersion;
 
-  debs = (lib.intersperse "|" debs-install);
+  memSize = 4096;
 
   preVM = ''
     mkdir -p $out
-    diskImage=$out/${name}.img
-    ${pkgs.qemu_kvm}/bin/qemu-img create -f raw $diskImage "${toString size}M"
+    diskImage=$out/OS.img
+    ${pkgs.qemu_kvm}/bin/qemu-img create -f raw $diskImage "${
+      toString imageSize
+    }M"
   '';
 
   buildCommand = ''
     ${scripts}/build.sh
+    mkdir -p "$out/nix-support"
+    echo ${toString [ debsStage0 debsStage1 ]} > $out/nix-support/deb-inputs
   '';
 })
