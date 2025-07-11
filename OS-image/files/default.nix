@@ -24,5 +24,6 @@ in stdenv.mkDerivation {
 
     # Copy the files
     cp -vr etc $out
+    cp -vr usr $out
   '';
 }

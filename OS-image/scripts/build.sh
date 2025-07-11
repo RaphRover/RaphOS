@@ -79,7 +79,11 @@ rm -rf /mnt/etc/update-motd.d/*
 cp -vr --no-preserve=mode "${FILES_DIR}/"* /mnt/
 cp -v /mnt/usr/share/systemd/tmp.mount /mnt/etc/systemd/system/
 
+# Patch configuration files
+sed -i "s|@USER_NAME@|${USER_NAME}|g" /mnt/etc/ros/setup.bash
+
 # Fix file permissions
+chmod +x /mnt/usr/lib/ros/*
 chmod +x /mnt/etc/update-motd.d/*
 
 # Symlink resolv.conf to systemd-resolved
@@ -103,7 +107,34 @@ echo "${USER_NAME}:${USER_PASS}" | chpasswd
 for GRP in adm dialout audio sudo video plugdev input; do
     adduser $USER_NAME "\${GRP}"
 done
+
+# Do the rest of the commands as the default user
+su - ${USER_NAME}
+set -ex
+
+# Build Raph packages
+cd /home/${USER_NAME}
+mkdir -p ros_ws/src
+cp -vr /inst${raph_common_src}/. ros_ws/src/raph_common
+cp -vr /inst${raph_robot_src}/. ros_ws/src/raph_robot
+chmod -R u+w ros_ws/src
+cd ros_ws
+source /opt/ros/jazzy/setup.bash
+colcon build --event-handlers desktop_notification- status- terminal_title- console_cohesion+ \
+  --cmake-args -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
+
+# Enable user services
+systemctl --user enable ros-nodes
+systemctl --user enable uros-agent
+systemctl --user enable ros.target
 CHROOT
+
+# Enable lingering for default user
+mkdir -p -m 755 "/mnt/var/lib/systemd/linger"
+touch "/mnt/var/lib/systemd/linger/${USER_NAME}"
+
+# Automatically source our setup when user logs in to bash shell
+echo -e "\nsource /etc/ros/setup.bash" >> "/mnt/home/${USER_NAME}/.bashrc"
 
 # update-grub needs udev to detect the filesystem UUID -- without,
 # we'll get root=/dev/vda2 on the cmdline which will only work in

@@ -4,6 +4,16 @@ let
 
   tools = import ./tools.nix { inherit lib pkgs; };
 
+  raph_common_src = builtins.fetchGit {
+    url = "git@github.com:RaphRover/raph_common.git";
+    rev = "b85280e3e8d98d6209554545f431af8612c0d314";
+  };
+
+  raph_robot_src = builtins.fetchGit {
+    url = "git@github.com:RaphRover/raph_robot.git";
+    rev = "785a36fd437b1037e1d62f6f301ffe9ac0666c8a";
+  };
+
   files = pkgs.callPackage ./files { inherit OSName OSVersion; };
 
   scripts = pkgs.callPackage ./scripts { inherit files; };
@@ -60,8 +70,8 @@ let
       name = "fictionlab";
       packagesFile = (fetchurl {
         url =
-          "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-9RghWT5jQ00AYy68C/4nh6pqC/L2i5EzERSogmK+PPw=";
+          "https://archive.fictionlab.pl/dists/noble/main/binary-amd64/Packages.gz";
+        sha256 = "sha256-MUh8vy7OqQ3enN3lMN2IlB0ukXFl/UGt0JpO0wKj05Q=";
       });
       urlPrefix = "https://archive.fictionlab.pl";
     }
@@ -154,6 +164,15 @@ let
       # ROS base packages
       "ros-jazzy-ros-base"
       "ros-jazzy-micro-ros-agent"
+
+      # Raph Rover ROS package dependencies
+      "ros-jazzy-xacro"
+      "ros-jazzy-robot-state-publisher"
+      "ros-jazzy-joy-linux"
+      "ros-jazzy-ackermann-msgs"
+      "ros-jazzy-depth-image-proc"
+      "ros-jazzy-depthai-ros-driver"
+      "ros-jazzy-rplidar-ros"
     ];
   }) { inherit fetchurl; };
 
@@ -168,7 +187,7 @@ let
   debsStage1 = exportStage 1;
 
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit OSName debsStage0 debsStage1;
+  inherit OSName debsStage0 debsStage1 raph_common_src raph_robot_src;
 
   pname = "${OSName}-image";
   version = OSVersion;

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"
+  name="raph">
+
+  <xacro:arg name="link_prefix" default="" />
+
+  <xacro:include filename="$(find raph_description)/urdf/raph_macros.xacro" />
+
+  <xacro:raph
+    footprint_link="true"
+    link_prefix="$(arg link_prefix)"
+    joint_prefix="" />
+
+</robot>
