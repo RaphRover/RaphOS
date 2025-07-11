@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
+    - uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: |
+          ${{ secrets.SSH_PRIVATE_KEY_RAPH_COMMON }}
+          ${{ secrets.SSH_PRIVATE_KEY_RAPH_ROBOT }}
     - uses: nixbuild/nix-quick-install-action@v30
       with:
         nix_conf: |
