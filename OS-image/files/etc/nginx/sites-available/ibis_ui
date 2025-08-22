@@ -8,6 +8,11 @@ server {
 
     server_name _;
 
+    # Disable all caching
+    add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
+    add_header Pragma "no-cache" always;
+    add_header Expires "0" always;
+
     location / {
         # First attempt to serve request as file, then
         # as directory, then fall back to displaying a 404.
