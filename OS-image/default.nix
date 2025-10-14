@@ -19,9 +19,9 @@ let
   scripts = pkgs.callPackage ./scripts { inherit files; };
 
   packageLists = let
-    noble-updates-stamp = "20250710T120000Z";
-    ros2-stamp = "2025-05-23";
-    fictionlab-stamp = "2025-07-11";
+    noble-updates-stamp = "20251014T120000Z";
+    ros2-stamp = "2025-08-20";
+    fictionlab-stamp = "2025-09-30";
   in [
     {
       name = "noble-main";
@@ -44,7 +44,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-        sha256 = "sha256-oy2UzIbfgx3X3Eexi6izPeGQlT6W4bycDL/YRW/DvJY=";
+        sha256 = "sha256-zJo61EqDp/HYhfJnSbwHEK37rsZr/gDp44LyqadEDis=                                                                                      /0.9s";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -53,7 +53,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
-        sha256 = "sha256-IRWR+PLMCmITU7a9tngtcvFtg4xtQTy3+WFvC9oKC1A=";
+        sha256 = "sha256-RA/k5UaFw0s3+b1PIWysbwEzZ9hdeBA+vcNj0vQhRr0=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -62,7 +62,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
-        sha256 = "sha256-M0fiaPJW8FqqfR8j8oSjRxgCXkoJD4COsrVBN9yMRLE=";
+        sha256 = "sha256-zo5dZODtpjsSaRV7eCIa2VldZamV2ljILt6omCCNqhU=";
       });
       urlPrefix = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu";
     }
@@ -71,7 +71,7 @@ let
       packagesFile = (fetchurl {
         url =
           "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-MUh8vy7OqQ3enN3lMN2IlB0ukXFl/UGt0JpO0wKj05Q=";
+        sha256 = "sha256-to53nkc40rhA/wELwOiJGaMmzHddVogrmJc7msjy36U=";
       });
       urlPrefix = "https://archive.fictionlab.pl";
     }
