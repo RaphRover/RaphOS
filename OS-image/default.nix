@@ -5,12 +5,12 @@ let
   tools = import ./tools.nix { inherit lib pkgs; };
 
   raph_common_src = builtins.fetchGit {
-    url = "git@github.com:RaphRover/raph_common.git";
+    url = "https://github.com/RaphRover/raph_common.git";
     rev = "6888f0d0e8730c177073107320db2d93c854b058";
   };
 
   raph_robot_src = builtins.fetchGit {
-    url = "git@github.com:RaphRover/raph_robot.git";
+    url = "https://github.com/RaphRover/raph_robot.git";
     rev = "785a36fd437b1037e1d62f6f301ffe9ac0666c8a";
   };
 
