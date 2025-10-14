@@ -6,7 +6,7 @@ let
 
   raph_common_src = builtins.fetchGit {
     url = "git@github.com:RaphRover/raph_common.git";
-    rev = "b85280e3e8d98d6209554545f431af8612c0d314";
+    rev = "6888f0d0e8730c177073107320db2d93c854b058";
   };
 
   raph_robot_src = builtins.fetchGit {
