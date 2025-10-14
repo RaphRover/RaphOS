@@ -44,7 +44,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-        sha256 = "sha256-zJo61EqDp/HYhfJnSbwHEK37rsZr/gDp44LyqadEDis=                                                                                      /0.9s";
+        sha256 = "sha256-zJo61EqDp/HYhfJnSbwHEK37rsZr/gDp44LyqadEDis=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
