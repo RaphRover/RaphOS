@@ -19,9 +19,9 @@ let
   scripts = pkgs.callPackage ./scripts { inherit files; };
 
   packageLists = let
-    noble-updates-stamp = "20251124T120000Z";
+    noble-updates-stamp = "20260105T120000Z";
     ros2-stamp = "2025-08-20";
-    fictionlab-stamp = "2025-09-30";
+    fictionlab-stamp = "2026-01-05";
   in [
     {
       name = "noble-main";
@@ -44,7 +44,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-        sha256 = "sha256-5WBijAx8qCj0nqMtpP4Tsn422MZ+UYz+ZamnTKVBXnU=";
+        sha256 = "sha256-leBJ29a2C2qdIPdjSSuwkHKUSq8GEC9L0DgdxHWZ55s=                                                                                      /1.8s";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -53,7 +53,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
-        sha256 = "sha256-I8ciCrch5sEjJljv73TpbdylMQvBroGH9tS+jQj0VAo=";
+        sha256 = "sha256-CWYA0A4ytptWdClW3ACdIH4hKscblDh5OgxExP4VdJA=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -71,7 +71,7 @@ let
       packagesFile = (fetchurl {
         url =
           "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-to53nkc40rhA/wELwOiJGaMmzHddVogrmJc7msjy36U=";
+        sha256 = "sha256-mC7ma4GPZuxQMyQGFckpMvkBxUCiZrz+1TmsB20stc8=";
       });
       urlPrefix = "https://archive.fictionlab.pl";
     }
