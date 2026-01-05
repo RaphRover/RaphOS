@@ -79,9 +79,6 @@ rm -rf /mnt/etc/update-motd.d/*
 cp -vr --no-preserve=mode "${FILES_DIR}/"* /mnt/
 cp -v /mnt/usr/share/systemd/tmp.mount /mnt/etc/systemd/system/
 
-# Patch configuration files
-sed -i "s|@USER_NAME@|${USER_NAME}|g" /mnt/etc/ros/setup.bash
-
 # Fix file permissions
 chmod +x /mnt/usr/lib/ros/*
 chmod +x /mnt/etc/update-motd.d/*
@@ -115,17 +112,6 @@ chown root:root -R "/etc/ros/rosdep"
 # Do the rest of the commands as the default user
 su - ${USER_NAME}
 set -ex
-
-# Build Raph packages
-cd /home/${USER_NAME}
-mkdir -p ros_ws/src
-cp -vr /inst${raph_common_src}/. ros_ws/src/raph_common
-cp -vr /inst${raph_robot_src}/. ros_ws/src/raph_robot
-chmod -R u+w ros_ws/src
-cd ros_ws
-source /opt/ros/jazzy/setup.bash
-colcon build --event-handlers desktop_notification- status- terminal_title- console_cohesion+ \
-  --cmake-args -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
 
 # Enable user services
 systemctl --user enable ros-nodes
