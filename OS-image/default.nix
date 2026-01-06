@@ -12,7 +12,7 @@ let
     pname = "raph_ui";
     version = "1.0.0";
     src = builtins.fetchGit {
-      url = "git@github.com:RaphRover/raph_ui.git";
+      url = "https://github.com/RaphRover/raph_ui.git";
       rev = "2b65796878bc3fda9b8f0ac43e67b8777b004f63";
     };
     npmDepsHash = "sha256-1ZwfeXmLuO/HDBW3uFgJ0vQ6lhy0HT4+QTHkzpo6uA4=";
