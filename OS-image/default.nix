@@ -1,10 +1,29 @@
-{ OSName, OSVersion, lib, pkgs, vmTools, fetchurl, stdenv, makeWrapper, ... }:
+{ OSName, OSVersion, lib, pkgs, vmTools, fetchurl, stdenv, buildNpmPackage, ...
+}:
 let
   imageSize = 8192;
 
   tools = import ./tools.nix { inherit lib pkgs; };
 
-  files = pkgs.callPackage ./files { inherit OSName OSVersion; };
+  # To update the raph_ui version, change the `rev` to the desired commit hash and clean the
+  # `npmDepsHash` field. Then, start a nix build; it will fail and print the new hash to use.
+  # After updating the hash, you can run the build again.
+  raph_ui = buildNpmPackage {
+    pname = "raph_ui";
+    version = "1.0.0";
+    src = builtins.fetchGit {
+      url = "git@github.com:RaphRover/raph_ui.git";
+      rev = "2b65796878bc3fda9b8f0ac43e67b8777b004f63";
+    };
+    npmDepsHash = "sha256-1ZwfeXmLuO/HDBW3uFgJ0vQ6lhy0HT4+QTHkzpo6uA4=";
+    makeCacheWritable = true;
+    installPhase = ''
+      mkdir $out
+      cp -r dist/* $out
+    '';
+  };
+
+  files = pkgs.callPackage ./files { inherit OSName OSVersion raph_ui; };
 
   scripts = pkgs.callPackage ./scripts { inherit files; };
 

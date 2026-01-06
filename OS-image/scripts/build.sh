@@ -93,6 +93,10 @@ rm /mnt/etc/ssh/ssh_host_*
 echo "${TARGET_HOSTNAME}" > "/mnt/etc/hostname"
 printf "\n127.0.1.1 ${TARGET_HOSTNAME}\n" >> "/mnt/etc/hosts"
 
+# Configure nginx
+rm -vf /mnt/etc/nginx/sites-enabled/default
+ln -vs /etc/nginx/sites-available/raph_ui /mnt/etc/nginx/sites-enabled/raph_ui
+
 my_chroot /mnt /bin/bash -exuo pipefail <<CHROOT
 # Create default user
 adduser --disabled-password --comment "" ${USER_NAME}
