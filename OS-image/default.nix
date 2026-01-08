@@ -7,12 +7,12 @@ let
 
   raph_common_src = builtins.fetchGit {
     url = "https://github.com/RaphRover/raph_common.git";
-    rev = "398c96195e1fe7399076870abfc560659d1dbefb";
+    rev = "2736664881334cd8e8d20206cd6aedf3a2c9141d";
   };
 
   raph_robot_src = builtins.fetchGit {
     url = "https://github.com/RaphRover/raph_robot.git";
-    rev = "7b7156e06f8d763b406331f49ea33eb99d0eff0e";
+    rev = "204fad08629682ddb4d9a69f30aaef2eb23abfb1";
   };
 
   # To update the raph_ui version, change the `rev` to the desired commit hash and clean the
@@ -63,8 +63,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-        sha256 =
-          "sha256-leBJ29a2C2qdIPdjSSuwkHKUSq8GEC9L0DgdxHWZ55s=                                                                                      /1.8s";
+        sha256 = "sha256-leBJ29a2C2qdIPdjSSuwkHKUSq8GEC9L0DgdxHWZ55s=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
