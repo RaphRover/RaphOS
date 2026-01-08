@@ -5,6 +5,16 @@ let
 
   tools = import ./tools.nix { inherit lib pkgs; };
 
+  raph_common_src = builtins.fetchGit {
+    url = "https://github.com/RaphRover/raph_common.git";
+    rev = "398c96195e1fe7399076870abfc560659d1dbefb";
+  };
+
+  raph_robot_src = builtins.fetchGit {
+    url = "https://github.com/RaphRover/raph_robot.git";
+    rev = "7b7156e06f8d763b406331f49ea33eb99d0eff0e";
+  };
+
   # To update the raph_ui version, change the `rev` to the desired commit hash and clean the
   # `npmDepsHash` field. Then, start a nix build; it will fail and print the new hash to use.
   # After updating the hash, you can run the build again.
@@ -175,8 +185,18 @@ let
       "ros-jazzy-ros-base"
       "ros-jazzy-micro-ros-agent"
 
-      # Raph Rover ROS packages
-      "ros-jazzy-raph-robot"
+      # Raph Rover ROS package dependencies
+      "ros-jazzy-ackermann-msgs"
+      "ros-jazzy-depth-image-proc"
+      "ros-jazzy-depthai-ros-driver"
+      "ros-jazzy-joy-linux"
+      "ros-jazzy-laser-filters"
+      "ros-jazzy-robot-state-publisher"
+      "ros-jazzy-rosapi"
+      "ros-jazzy-rosbridge-server"
+      "ros-jazzy-rplidar-ros"
+      "ros-jazzy-web-video-server"
+      "ros-jazzy-xacro"
     ];
   }) { inherit fetchurl; };
 
@@ -191,7 +211,7 @@ let
   debsStage1 = exportStage 1;
 
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit OSName debsStage0 debsStage1;
+  inherit OSName debsStage0 debsStage1 raph_common_src raph_robot_src;
 
   pname = "${OSName}-image";
   version = OSVersion;
