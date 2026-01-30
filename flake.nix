@@ -9,7 +9,7 @@
       pkgs = (import nixpkgs) { inherit system; };
 
       OSName = "RaphOS";
-      OSVersion = "0.1.0";
+      OSVersion = "0.2.0";
 
       OSImage = pkgs.callPackage ./OS-image { inherit OSName OSVersion; };
 
