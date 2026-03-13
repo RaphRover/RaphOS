@@ -7,12 +7,12 @@ let
 
   raph_common_src = builtins.fetchGit {
     url = "https://github.com/RaphRover/raph_common.git";
-    rev = "2736664881334cd8e8d20206cd6aedf3a2c9141d";
+    rev = "30322d5e88846829d93db0dbd2b9b8ebdf051baf";
   };
 
   raph_robot_src = builtins.fetchGit {
     url = "https://github.com/RaphRover/raph_robot.git";
-    rev = "204fad08629682ddb4d9a69f30aaef2eb23abfb1";
+    rev = "5c17ece31f17da4c266da8b7aca4fe26b181ec74";
   };
 
   # To update the raph_ui version, change the `rev` to the desired commit hash and clean the
@@ -23,7 +23,7 @@ let
     version = "1.0.0";
     src = builtins.fetchGit {
       url = "https://github.com/RaphRover/raph_ui.git";
-      rev = "2b65796878bc3fda9b8f0ac43e67b8777b004f63";
+      rev = "68f74cc227a82904e9a4c77474f8698f971583ec";
     };
     npmDepsHash = "sha256-1ZwfeXmLuO/HDBW3uFgJ0vQ6lhy0HT4+QTHkzpo6uA4=";
     makeCacheWritable = true;
@@ -38,9 +38,9 @@ let
   scripts = pkgs.callPackage ./scripts { inherit files; };
 
   packageLists = let
-    noble-updates-stamp = "20260105T120000Z";
-    ros2-stamp = "2025-08-20";
-    fictionlab-stamp = "2026-01-05";
+    noble-updates-stamp = "20260313T120000Z";
+    ros2-stamp = "2026-01-28";
+    fictionlab-stamp = "2026-01-26";
   in [
     {
       name = "noble-main";
@@ -63,7 +63,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-        sha256 = "sha256-leBJ29a2C2qdIPdjSSuwkHKUSq8GEC9L0DgdxHWZ55s=";
+        sha256 = "sha256-HKkVlPgye9ZWosAhH/QHYbsQxFLv2TGS7FAF7ps+6sQ=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -72,7 +72,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
-        sha256 = "sha256-CWYA0A4ytptWdClW3ACdIH4hKscblDh5OgxExP4VdJA=";
+        sha256 = "sha256-sCYnJUnCVBHuEYU47ZA1EbB1YPiumXv4q09EY7yP89A=";
       });
       urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
     }
@@ -81,7 +81,7 @@ let
       packagesFile = (fetchurl {
         url =
           "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
-        sha256 = "sha256-zo5dZODtpjsSaRV7eCIa2VldZamV2ljILt6omCCNqhU=";
+        sha256 = "sha256-6U3UJEVPPz27vEfUwPalhbpML1DKUL98ofvUktdJ7Vw=";
       });
       urlPrefix = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu";
     }
@@ -90,7 +90,7 @@ let
       packagesFile = (fetchurl {
         url =
           "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-mC7ma4GPZuxQMyQGFckpMvkBxUCiZrz+1TmsB20stc8=";
+        sha256 = "sha256-Xo51B4ihxLRoXaQmRvWhOecuGlUzxw3e8FKQ8aLEk88=";
       });
       urlPrefix = "https://archive.fictionlab.pl";
     }
@@ -177,8 +177,17 @@ let
       "ros2-apt-source"
 
       # ROS build tools
-      "ros-dev-tools"
+      # "ros-dev-tools"
+      # The newest ROS snapshot is missing ros-dev-tools, so we install its dependencies instead
+      "build-essential"
+      "cmake"
+      "python3-setuptools"
+      "python3-bloom"
       "python3-colcon-common-extensions"
+      "python3-colcon-mixin"
+      "python3-rosdep"
+      "python3-vcstool"
+      "wget"
 
       # ROS base packages
       "ros-jazzy-ros-base"
@@ -187,7 +196,11 @@ let
       # Raph Rover ROS package dependencies
       "ros-jazzy-ackermann-msgs"
       "ros-jazzy-depth-image-proc"
-      "ros-jazzy-depthai-ros-driver"
+      "ros-jazzy-depthai"
+      "ros-jazzy-depthai-bridge"
+      "ros-jazzy-generate-parameter-library"
+      "ros-jazzy-image-proc"
+      "ros-jazzy-image-transport-plugins"
       "ros-jazzy-joy-linux"
       "ros-jazzy-laser-filters"
       "ros-jazzy-robot-state-publisher"
