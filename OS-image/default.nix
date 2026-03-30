@@ -5,42 +5,14 @@ let
 
   tools = import ./tools.nix { inherit lib pkgs; };
 
-  raph_common_src = builtins.fetchGit {
-    url = "https://github.com/RaphRover/raph_common.git";
-    rev = "30322d5e88846829d93db0dbd2b9b8ebdf051baf";
-  };
-
-  raph_robot_src = builtins.fetchGit {
-    url = "https://github.com/RaphRover/raph_robot.git";
-    rev = "5c17ece31f17da4c266da8b7aca4fe26b181ec74";
-  };
-
-  # To update the raph_ui version, change the `rev` to the desired commit hash and clean the
-  # `npmDepsHash` field. Then, start a nix build; it will fail and print the new hash to use.
-  # After updating the hash, you can run the build again.
-  raph_ui = buildNpmPackage {
-    pname = "raph_ui";
-    version = "1.0.0";
-    src = builtins.fetchGit {
-      url = "https://github.com/RaphRover/raph_ui.git";
-      rev = "68f74cc227a82904e9a4c77474f8698f971583ec";
-    };
-    npmDepsHash = "sha256-1ZwfeXmLuO/HDBW3uFgJ0vQ6lhy0HT4+QTHkzpo6uA4=";
-    makeCacheWritable = true;
-    installPhase = ''
-      mkdir $out
-      cp -r dist/* $out
-    '';
-  };
-
-  files = pkgs.callPackage ./files { inherit OSName OSVersion raph_ui; };
+  files = pkgs.callPackage ./files { inherit OSName OSVersion; };
 
   scripts = pkgs.callPackage ./scripts { inherit files; };
 
   packageLists = let
     noble-updates-stamp = "20260313T120000Z";
     ros2-stamp = "2026-01-28";
-    fictionlab-stamp = "2026-01-26";
+    fictionlab-stamp = "2026-03-30";
   in [
     {
       name = "noble-main";
@@ -90,7 +62,7 @@ let
       packagesFile = (fetchurl {
         url =
           "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-Xo51B4ihxLRoXaQmRvWhOecuGlUzxw3e8FKQ8aLEk88=";
+        sha256 = "sha256-4QLNplKdPIouOMhJEJYILncOldD+jvdEGbFDCPI3UGA=";
       });
       urlPrefix = "https://archive.fictionlab.pl";
     }
@@ -191,24 +163,13 @@ let
 
       # ROS base packages
       "ros-jazzy-ros-base"
-      "ros-jazzy-micro-ros-agent"
 
-      # Raph Rover ROS package dependencies
-      "ros-jazzy-ackermann-msgs"
-      "ros-jazzy-depth-image-proc"
-      "ros-jazzy-depthai"
-      "ros-jazzy-depthai-bridge"
-      "ros-jazzy-generate-parameter-library"
-      "ros-jazzy-image-proc"
-      "ros-jazzy-image-transport-plugins"
-      "ros-jazzy-joy-linux"
-      "ros-jazzy-laser-filters"
-      "ros-jazzy-robot-state-publisher"
-      "ros-jazzy-rosapi"
-      "ros-jazzy-rosbridge-server"
-      "ros-jazzy-rplidar-ros"
-      "ros-jazzy-web-video-server"
-      "ros-jazzy-xacro"
+      # Raph Rover ROS packages
+      "ros-jazzy-micro-ros-agent"
+      "ros-jazzy-raph-robot"
+
+      # Raph UI
+      "raph-ui"
     ];
   }) { inherit fetchurl; };
 
@@ -223,7 +184,7 @@ let
   debsStage1 = exportStage 1;
 
 in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit OSName debsStage0 debsStage1 raph_common_src raph_robot_src;
+  inherit OSName debsStage0 debsStage1;
 
   pname = "${OSName}-image";
   version = OSVersion;
