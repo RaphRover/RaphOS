@@ -5,25 +5,7 @@ let
 
   tools = import ./tools.nix { inherit lib pkgs; };
 
-  # To update the raph_ui version, change the `rev` to the desired commit hash and clean the
-  # `npmDepsHash` field. Then, start a nix build; it will fail and print the new hash to use.
-  # After updating the hash, you can run the build again.
-  raph_ui = buildNpmPackage {
-    pname = "raph_ui";
-    version = "1.0.0";
-    src = builtins.fetchGit {
-      url = "https://github.com/RaphRover/raph_ui.git";
-      rev = "68f74cc227a82904e9a4c77474f8698f971583ec";
-    };
-    npmDepsHash = "sha256-1ZwfeXmLuO/HDBW3uFgJ0vQ6lhy0HT4+QTHkzpo6uA4=";
-    makeCacheWritable = true;
-    installPhase = ''
-      mkdir $out
-      cp -r dist/* $out
-    '';
-  };
-
-  files = pkgs.callPackage ./files { inherit OSName OSVersion raph_ui; };
+  files = pkgs.callPackage ./files { inherit OSName OSVersion; };
 
   scripts = pkgs.callPackage ./scripts { inherit files; };
 
@@ -185,6 +167,9 @@ let
       # Raph Rover ROS packages
       "ros-jazzy-micro-ros-agent"
       "ros-jazzy-raph-robot"
+
+      # Raph UI
+      "raph-ui"
     ];
   }) { inherit fetchurl; };
 

@@ -1,6 +1,6 @@
 
 
-{ OSName, OSVersion, stdenv, fetchurl, raph_ui }:
+{ OSName, OSVersion, stdenv, fetchurl }:
 let
   fictionlab-archive-keyring = (fetchurl {
     url = "https://archive.fictionlab.pl/fictionlab.gpg";
@@ -21,10 +21,6 @@ in stdenv.mkDerivation {
     # Copy the keyrings
     mkdir -p $out/usr/share/keyrings
     cp -v ${fictionlab-archive-keyring} $out/usr/share/keyrings/fictionlab-archive-keyring.gpg
-
-    # Copy the Raph UI
-    mkdir -p $out/opt
-    cp -vr ${raph_ui} $out/opt/raph_ui
 
     # Copy the files
     cp -vr etc $out
