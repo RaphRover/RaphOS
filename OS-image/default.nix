@@ -30,7 +30,7 @@ let
   packageLists = let
     noble-updates-stamp = "20260313T120000Z";
     ros2-stamp = "2026-01-28";
-    fictionlab-stamp = "2026-01-26";
+    fictionlab-stamp = "2026-03-30";
   in [
     {
       name = "noble-main";
@@ -80,7 +80,7 @@ let
       packagesFile = (fetchurl {
         url =
           "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-Xo51B4ihxLRoXaQmRvWhOecuGlUzxw3e8FKQ8aLEk88=";
+        sha256 = "sha256-4QLNplKdPIouOMhJEJYILncOldD+jvdEGbFDCPI3UGA=";
       });
       urlPrefix = "https://archive.fictionlab.pl";
     }
