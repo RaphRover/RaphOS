@@ -120,17 +120,6 @@ chown root:root -R "/etc/ros/rosdep"
 su - ${USER_NAME}
 set -ex
 
-# Build Raph packages
-cd /home/${USER_NAME}
-mkdir -p ros_ws/src
-cp -vr /inst${raph_common_src}/. ros_ws/src/raph_common
-cp -vr /inst${raph_robot_src}/. ros_ws/src/raph_robot
-chmod -R u+w ros_ws/src
-cd ros_ws
-source /opt/ros/jazzy/setup.bash
-colcon build --event-handlers desktop_notification- status- terminal_title- console_cohesion+ \
-  --cmake-args -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
-
 # Enable user services
 systemctl --user enable ros-nodes
 systemctl --user enable uros-agent
