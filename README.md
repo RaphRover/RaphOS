@@ -3,7 +3,7 @@ RaphOS is a Debian-based Operating System distribution for the single-board comp
 
 This repository contains a [Nix flake] for building RaphOS and bootstrapper images. \
 The bootstrapper image is a minimal bootable NixOS iso image that, when booted, flashes the RaphOS image to the internal storage of the UP 7000. \
-For the built bootstrapper images, visit the [Releases page](https://github.com/RaphRover/RaphOS/releases).
+Built bootstrapper images can be found on our [Google Drive](https://drive.google.com/drive/folders/1eqjllBQYaaT_1JUH83Cld1Jktg2wVMsp?usp=drive_link).
 
 ## Building
 ### Pre-requisites
