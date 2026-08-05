@@ -8,7 +8,7 @@ source /etc/ros/aliases
 ### Robot Configuration
 
 # Namespace of the robot
-# Affects all node namespaces (except the controller node) and URDF link names
+# Affects all node namespaces and URDF link names
 export ROBOT_NAMESPACE=""
 
 
