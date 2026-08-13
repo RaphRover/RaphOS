@@ -16,6 +16,7 @@
   <include file="$(find-pkg-share raph_bringup)/launch/raph_bringup.launch.xml">
     <arg name="spawn_state_publisher" value="false" />
     <arg name="tf_frame_prefix" value="$(var tf_frame_prefix)" />
+    <arg name="param_overrides_yaml_file" value="/etc/ros/parameter_overrides.yaml" />
   </include>
 
 </launch>
