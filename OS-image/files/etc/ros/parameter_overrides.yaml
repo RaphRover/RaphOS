@@ -19,7 +19,7 @@
 
   # 2. Expanding lidar box filter volume and lowering scan frequency of the RPLIDAR node:
   #rplidar:
-  #  box_filter:
+  #  scan_to_scan_filter_chain:
   #    ros__parameters:
   #      filter1:
   #        params:
