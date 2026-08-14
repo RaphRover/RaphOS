@@ -34,8 +34,8 @@
   #    ros__parameters:
   #      scan_frequency: 5.0
 
-  # Note the above structure: The "box_filter" and "rplidar_node" are separate nodes under the "rplidar" namespace, each with its own parameters.
-  # Don't use rplidar/box_filter or rplidar/rplidar_node as the parameter path, as it might not work.
+  # Note the above structure: The "scan_to_scan_filter_chain" and "rplidar_node" are separate nodes under the "rplidar" namespace, each with its own parameters.
+  # Don't use rplidar/scan_to_scan_filter_chain or rplidar/rplidar_node as the parameter path, as it might not work.
 
   # 3. Reducing frequency and compression quality of the Oak RGB image:
   #oak:
