@@ -1,0 +1,46 @@
+# You can use this file to override parameters for ROS nodes
+# After editing this file you can apply the new parameters by running `ros-nodes-restart`
+
+#
+# For a list of available parameters and their default values, see: https://docs.fictionlab.pl/raph-rover/documentation/ros-api#parameters
+# Note: When removing or commenting out parameters for the controller node, a power cycle of the robot is required for the changes to take effect.
+# This is not the case for adding new parameters or changing existing ones.
+
+/**: # Apply to all namespaces
+  _: {} # placeholder to prevent empty file error
+  # Examples:
+
+  # 1. Changing deceleration and max velocity of the controller node:
+  #controller:
+  #  ros__parameters:
+  #    drivetrain.ackermann_deceleration: 6.0
+  #    drivetrain.turn_in_place_deceleration: 9.0
+  #    drivetrain.max_wheel_angular_velocity: 20.0
+
+  # 2. Expanding lidar box filter volume and lowering scan frequency of the RPLIDAR node:
+  #rplidar:
+  #  scan_to_scan_filter_chain:
+  #    ros__parameters:
+  #      filter1:
+  #        params:
+  #          max_x: -0.30
+  #          max_y: 0.27
+  #          max_z: 0.35
+  #          min_x: -0.5
+  #          min_y: -0.3
+  #          min_z: -0.3
+  #          invert: false
+  #  rplidar_node:
+  #    ros__parameters:
+  #      scan_frequency: 5.0
+
+  # Note the above structure: The "scan_to_scan_filter_chain" and "rplidar_node" are separate nodes under the "rplidar" namespace, each with its own parameters.
+  # Don't use rplidar/scan_to_scan_filter_chain or rplidar/rplidar_node as the parameter path, as it might not work.
+
+  # 3. Reducing frequency and compression quality of the Oak RGB image:
+  #oak:
+  #  ros__parameters:
+  #    rgb:
+  #      fps: 10.0
+  #    rgb_compressed:
+  #      jpeg_quality: 50

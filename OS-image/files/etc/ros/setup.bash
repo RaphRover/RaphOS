@@ -9,6 +9,7 @@ source /etc/ros/aliases
 
 # Namespace of the robot
 # Affects all node namespaces and URDF link names
+# To apply the namespace, set this variable and run ros-restart or reboot the robot.
 export ROBOT_NAMESPACE=""
 
 
