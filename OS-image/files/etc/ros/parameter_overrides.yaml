@@ -17,22 +17,38 @@
   #    drivetrain.turn_in_place_deceleration: 9.0
   #    drivetrain.max_wheel_angular_velocity: 20.0
 
-  # 2. Expanding lidar box filter volume and lowering scan frequency of the RPLIDAR node:
+  # 2. Expanding lidar box filter volume, expanding lidar angle filters, lowering scan frequency (600rpm is 10Hz) and enabling interpolated rays of the RPLIDAR node:
   #rplidar:
   #  scan_to_scan_filter_chain:
   #    ros__parameters:
+  #      lazy_subscription: true
   #      filter1:
+  #        name: box_filter_rover_contour_and_antennas
+  #        type: laser_filters/LaserScanBoxFilter
   #        params:
-  #          max_x: -0.30
-  #          max_y: 0.27
-  #          max_z: 0.35
-  #          min_x: -0.5
-  #          min_y: -0.3
+  #          max_x: 0.0
+  #          max_y: 0.23
+  #          max_z: 0.3
+  #          min_x: -0.48
+  #          min_y: -0.23
   #          min_z: -0.3
   #          invert: false
+  #      filter2:
+  #        name: angle_filter_left_motor_cover
+  #        type: laser_filters/LaserScanAngularBoundsFilterInPlace
+  #        params:
+  #          lower_angle: 2.3
+  #          upper_angle: 2.8
+  #      filter3:
+  #        name: angle_filter_right_motor_cover
+  #        type: laser_filters/LaserScanAngularBoundsFilterInPlace
+  #        params:
+  #          lower_angle: 3.4
+  #          upper_angle: 3.9
   #  rplidar_node:
   #    ros__parameters:
-  #      scan_frequency: 5.0
+  #      rpm: 600
+  #      interpolated_rays: true
 
   # Note the above structure: The "scan_to_scan_filter_chain" and "rplidar_node" are separate nodes under the "rplidar" namespace, each with its own parameters.
   # Don't use rplidar/scan_to_scan_filter_chain or rplidar/rplidar_node as the parameter path, as it might not work.
