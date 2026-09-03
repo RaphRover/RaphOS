@@ -23,7 +23,7 @@
 
   services.openssh.enable = lib.mkForce false;
 
-  networking.wireless.enable = false;
+  networking.wireless.enable = lib.mkForce false;
   networking.firewall.enable = false;
   networking.useDHCP = false;
 
@@ -73,6 +73,6 @@
     passthru = { shellPath = "/bin/bootstrapper-sh"; };
   };
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "26.11";
 }
 

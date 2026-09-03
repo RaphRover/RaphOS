@@ -173,12 +173,7 @@ let
     ];
   }) { inherit fetchurl; };
 
-  exportStage = stageNr:
-    pkgs.runCommand "debs-stage${toString stageNr}" { } ''
-      echo "${
-        toString (lib.intersperse "|" (builtins.elemAt debsClosure stageNr))
-      }" > $out
-    '';
+  exportStage = stageNr: map toString (builtins.elemAt debsClosure stageNr);
 
   debsStage0 = exportStage 0;
   debsStage1 = exportStage 1;
@@ -197,10 +192,19 @@ in vmTools.runInLinuxVM (stdenv.mkDerivation {
     ${pkgs.qemu_kvm}/bin/qemu-img create -f raw $diskImage "${
       toString imageSize
     }M"
+
+    # QEMU drops console output under nix-build, so the build logs to
+    # xchg/build.log instead, tailed here on the host. Tail gets its own
+    # private fd (3) so QEMU can't make it non-blocking and kill it with EAGAIN.
+    touch xchg/build.log
+    exec 3>/proc/self/fd/1
+    tail -n +1 -f xchg/build.log >&3 &
+    tailPid=$!
+    trap 'kill "$tailPid" 2>/dev/null || true' EXIT
   '';
 
   buildCommand = ''
-    ${scripts}/build.sh
+    ${scripts}/build.sh > /tmp/xchg/build.log 2>&1
     mkdir -p "$out/nix-support"
     echo ${toString [ debsStage0 debsStage1 ]} > $out/nix-support/deb-inputs
   '';
