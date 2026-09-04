@@ -25,6 +25,7 @@ partx -u "$DISK"
 mkfs.vfat -F32 -n ESP "$DISK"1
 # Make an ext4 filesystem for the system root
 mkfs.ext4 "$DISK"2 -L root
+ROOT_UUID=$(blkid -s UUID -o value "$DISK"2)
 
 # Mount everything to /mnt and provide some directories needed later on
 mkdir /mnt
@@ -157,6 +158,13 @@ systemctl enable systemd-networkd
 # Enable tmpfs on /tmp
 systemctl enable tmp.mount
 CHROOT
+
+# grub-mkconfig's auto-detection can still fail to resolve a UUID for the
+# VM's root device and silently fall back to the raw device path (e.g.
+# /dev/vda2), which won't exist on the real hardware. Rewrite every
+# root= kernel argument already present in the generated config to use
+# the actual filesystem UUID.
+sed -i -E "s|root=[^ \"]+|root=UUID=${ROOT_UUID}|g" /mnt/boot/grub/grub.cfg
 
 # Remove backup files
 find "/mnt/etc" -type f -name "*-" -exec rm -v {} \;
