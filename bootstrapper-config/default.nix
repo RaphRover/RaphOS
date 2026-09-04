@@ -52,7 +52,7 @@
                 gptfdisk
                 inotify-tools
                 (python312Packages.python.withPackages (ps: [ ps.pyparted ]))
-                util-linuxMinimal
+                util-linux
               ]
             } --set OS_IMG_FILE "${OSImage}/OS.img"
         '';
