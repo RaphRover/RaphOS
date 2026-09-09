@@ -1,4 +1,12 @@
-{ OSName, OSVersion, lib, pkgs, vmTools, fetchurl, stdenv, buildNpmPackage, ...
+{
+  OSName,
+  OSVersion,
+  lib,
+  pkgs,
+  vmTools,
+  fetchurl,
+  stdenv,
+  ...
 }:
 let
   imageSize = 8192;
@@ -9,64 +17,74 @@ let
 
   scripts = pkgs.callPackage ./scripts { inherit files; };
 
-  packageLists = let
-    noble-updates-stamp = "20260313T120000Z";
-    ros2-stamp = "2026-01-28";
-    fictionlab-stamp = "2026-03-30";
-  in [
-    {
-      name = "noble-main";
-      packagesFile = (fetchurl {
-        url = "mirror://ubuntu/dists/noble/main/binary-amd64/Packages.xz";
-        sha256 = "sha256-KmoZnhAxpcJ5yzRmRtWUmT81scA91KgqqgMjmA3ZJFE=";
-      });
-      urlPrefix = "mirror://ubuntu";
-    }
-    {
-      name = "noble-universe";
-      packagesFile = (fetchurl {
-        url = "mirror://ubuntu/dists/noble/universe/binary-amd64/Packages.xz";
-        sha256 = "sha256-upBX+huRQ4zIodJoCNAMhTif4QHQwUliVN+XI2QFWZo=";
-      });
-      urlPrefix = "mirror://ubuntu";
-    }
-    {
-      name = "noble-updates-main";
-      packagesFile = (fetchurl {
-        url =
-          "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-        sha256 = "sha256-HKkVlPgye9ZWosAhH/QHYbsQxFLv2TGS7FAF7ps+6sQ=";
-      });
-      urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
-    }
-    {
-      name = "noble-updates-universe";
-      packagesFile = (fetchurl {
-        url =
-          "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
-        sha256 = "sha256-sCYnJUnCVBHuEYU47ZA1EbB1YPiumXv4q09EY7yP89A=";
-      });
-      urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
-    }
-    {
-      name = "ros2";
-      packagesFile = (fetchurl {
-        url =
-          "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
-        sha256 = "sha256-6U3UJEVPPz27vEfUwPalhbpML1DKUL98ofvUktdJ7Vw=";
-      });
-      urlPrefix = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu";
-    }
-    {
-      name = "fictionlab";
-      packagesFile = (fetchurl {
-        url =
-          "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
-        sha256 = "sha256-4QLNplKdPIouOMhJEJYILncOldD+jvdEGbFDCPI3UGA=";
-      });
-      urlPrefix = "https://archive.fictionlab.pl";
-    }
-  ];
+  packageLists =
+    let
+      noble-updates-stamp = "20260313T120000Z";
+      ros2-stamp = "2026-01-28";
+      fictionlab-stamp = "2026-03-30";
+    in
+    [
+      {
+        name = "noble-main";
+        packagesFile = (
+          fetchurl {
+            url = "mirror://ubuntu/dists/noble/main/binary-amd64/Packages.xz";
+            sha256 = "sha256-KmoZnhAxpcJ5yzRmRtWUmT81scA91KgqqgMjmA3ZJFE=";
+          }
+        );
+        urlPrefix = "mirror://ubuntu";
+      }
+      {
+        name = "noble-universe";
+        packagesFile = (
+          fetchurl {
+            url = "mirror://ubuntu/dists/noble/universe/binary-amd64/Packages.xz";
+            sha256 = "sha256-upBX+huRQ4zIodJoCNAMhTif4QHQwUliVN+XI2QFWZo=";
+          }
+        );
+        urlPrefix = "mirror://ubuntu";
+      }
+      {
+        name = "noble-updates-main";
+        packagesFile = (
+          fetchurl {
+            url = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
+            sha256 = "sha256-HKkVlPgye9ZWosAhH/QHYbsQxFLv2TGS7FAF7ps+6sQ=";
+          }
+        );
+        urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
+      }
+      {
+        name = "noble-updates-universe";
+        packagesFile = (
+          fetchurl {
+            url = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
+            sha256 = "sha256-sCYnJUnCVBHuEYU47ZA1EbB1YPiumXv4q09EY7yP89A=";
+          }
+        );
+        urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
+      }
+      {
+        name = "ros2";
+        packagesFile = (
+          fetchurl {
+            url = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
+            sha256 = "sha256-6U3UJEVPPz27vEfUwPalhbpML1DKUL98ofvUktdJ7Vw=";
+          }
+        );
+        urlPrefix = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu";
+      }
+      {
+        name = "fictionlab";
+        packagesFile = (
+          fetchurl {
+            url = "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
+            sha256 = "sha256-4QLNplKdPIouOMhJEJYILncOldD+jvdEGbFDCPI3UGA=";
+          }
+        );
+        urlPrefix = "https://archive.fictionlab.pl";
+      }
+    ];
 
   debsClosure = import (tools.debClosureGenerator {
     name = "debs-closure";
@@ -178,45 +196,51 @@ let
   debsStage0 = exportStage 0;
   debsStage1 = exportStage 1;
 
-in vmTools.runInLinuxVM (stdenv.mkDerivation {
-  inherit OSName debsStage0 debsStage1;
+in
+vmTools.runInLinuxVM (
+  stdenv.mkDerivation {
+    inherit OSName debsStage0 debsStage1;
 
-  pname = "${OSName}-image";
-  version = OSVersion;
+    pname = "${OSName}-image";
+    version = OSVersion;
 
-  memSize = 4096;
+    memSize = 4096;
 
-  preVM = ''
-    mkdir -p $out
-    diskImage=$out/OS.img
-    ${pkgs.qemu_kvm}/bin/qemu-img create -f raw $diskImage "${
-      toString imageSize
-    }M"
+    preVM = ''
+      mkdir -p $out
+      diskImage=$out/OS.img
+      ${pkgs.qemu_kvm}/bin/qemu-img create -f raw $diskImage "${toString imageSize}M"
 
-    # QEMU drops console output under nix-build, so the build logs to
-    # xchg/build.log instead, tailed here on the host. Tail gets its own
-    # private fd (3) so QEMU can't make it non-blocking and kill it with EAGAIN.
-    touch xchg/build.log
-    exec 3>/proc/self/fd/1
-    tail -n +1 -f xchg/build.log >&3 &
-    tailPid=$!
-    trap 'kill "$tailPid" 2>/dev/null || true' EXIT
-  '';
+      # QEMU drops console output under nix-build, so the build logs to
+      # xchg/build.log instead, tailed here on the host. Tail gets its own
+      # private fd (3) so QEMU can't make it non-blocking and kill it with EAGAIN.
+      touch xchg/build.log
+      exec 3>/proc/self/fd/1
+      tail -n +1 -f xchg/build.log >&3 &
+      tailPid=$!
+      trap 'kill "$tailPid" 2>/dev/null || true' EXIT
+    '';
 
-  buildCommand = ''
-    ${scripts}/build.sh > /tmp/xchg/build.log 2>&1
-    mkdir -p "$out/nix-support"
-    echo ${toString [ debsStage0 debsStage1 ]} > $out/nix-support/deb-inputs
-  '';
+    buildCommand = ''
+      ${scripts}/build.sh > /tmp/xchg/build.log 2>&1
+      mkdir -p "$out/nix-support"
+      echo ${
+        toString [
+          debsStage0
+          debsStage1
+        ]
+      } > $out/nix-support/deb-inputs
+    '';
 
-  postVM = ''
-    # Shrink the disk image
-    LAST_SECTOR=$(${pkgs.parted}/bin/parted $diskImage -ms unit s print | tail -n +3 | cut -d: -f3 | sed 's/s//' | sort -n | tail -1)
-    GPT_BACKUP_TABLE_SECTORS=34
-    SECTOR_SIZE=512
-    DISK_SIZE=$(( (LAST_SECTOR + GPT_BACKUP_TABLE_SECTORS) * SECTOR_SIZE ))
+    postVM = ''
+      # Shrink the disk image
+      LAST_SECTOR=$(${pkgs.parted}/bin/parted $diskImage -ms unit s print | tail -n +3 | cut -d: -f3 | sed 's/s//' | sort -n | tail -1)
+      GPT_BACKUP_TABLE_SECTORS=34
+      SECTOR_SIZE=512
+      DISK_SIZE=$(( (LAST_SECTOR + GPT_BACKUP_TABLE_SECTORS) * SECTOR_SIZE ))
 
-    ${pkgs.qemu_kvm}/bin/qemu-img resize --shrink -f raw $diskImage $DISK_SIZE
-    ${pkgs.gptfdisk}/bin/sgdisk -e $diskImage
-  '';
-})
+      ${pkgs.qemu_kvm}/bin/qemu-img resize --shrink -f raw $diskImage $DISK_SIZE
+      ${pkgs.gptfdisk}/bin/sgdisk -e $diskImage
+    '';
+  }
+)
