@@ -1,9 +1,12 @@
 {
   description = "A flake to build a RaphOS bootstrapper and OS image";
 
-  inputs = { nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable"; };
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+  };
 
-  outputs = { self, nixpkgs, ... }@inputs:
+  outputs =
+    { self, nixpkgs, ... }@inputs:
     let
       system = "x86_64-linux";
       pkgs = (import nixpkgs) { inherit system; };
@@ -15,11 +18,19 @@
 
       bootstrapper = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit inputs OSName OSImage OSVersion; };
+        specialArgs = {
+          inherit
+            inputs
+            OSName
+            OSImage
+            OSVersion
+            ;
+        };
         modules = [ ./bootstrapper-config ];
       };
 
-    in {
+    in
+    {
       nixosConfigurations = { inherit bootstrapper; };
 
       packages.${system} = {
@@ -27,6 +38,6 @@
         default = bootstrapper.config.system.build.isoImage;
       };
 
-      formatter.${system} = pkgs.nixfmt-classic;
+      formatter.${system} = pkgs.nixfmt-tree;
     };
 }
