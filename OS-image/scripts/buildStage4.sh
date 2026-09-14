@@ -118,6 +118,7 @@ CHROOT
 # /dev/vda2), which won't exist on the real hardware. Rewrite every
 # root= kernel argument already present in the generated config to use
 # the actual filesystem UUID.
+ROOT_UUID=$(blkid -s UUID -o value "$DISK"2)
 sed -i -E "s|root=[^ \"]+|root=UUID=${ROOT_UUID}|g" /mnt/boot/grub/grub.cfg
 
 umount /mnt/boot/efi
