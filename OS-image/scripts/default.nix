@@ -120,7 +120,10 @@
     name = "scripts-stageFinal";
     src = ./buildStageFinal.sh;
     nativeBuildInputs = [ makeWrapper ];
-    phases = [ "installPhase" "postFixup" ];
+    phases = [
+      "installPhase"
+      "postFixup"
+    ];
     installPhase = ''
       mkdir -p $out
       cp -vr $src $out/build.sh
