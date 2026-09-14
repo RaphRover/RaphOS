@@ -33,7 +33,7 @@ jobs:
         purge-primary-key: never
     - name: Build
       run: |
-        nix build -Lv .#nixosConfigurations.bootstrapper.config.system.build.toplevel
+        nix build -Lv .#nixosConfigurations.bootstrapper-lite.config.system.build.toplevel
         nix fmt -- -c .
     - name: Prepare cache
       run: |
