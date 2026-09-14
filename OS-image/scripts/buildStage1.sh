@@ -1,0 +1,75 @@
+#!/usr/bin/env bash -e
+
+source $NIX_ATTRS_SH_FILE
+
+DISK=/dev/vda
+
+my_chroot() {
+    DEBIAN_FRONTEND=noninteractive \
+    PATH=/usr/bin:/bin:/usr/sbin:/sbin \
+    $(type -tP chroot) $@
+}
+
+# Create partition table
+sgdisk $DISK \
+    -n1:0:+100M -t1:ef00 -c1:esp \
+    -n2:0:0 -t2:8300 -c2:root
+
+# Ensure that the partition block devices (/dev/vda1 etc) exist
+partx -u "$DISK"
+# Make a FAT filesystem for the EFI System Partition
+mkfs.vfat -F32 -n ESP "$DISK"1
+# Make an ext4 filesystem for the system root
+mkfs.ext4 "$DISK"2 -L root
+
+# Mount everything to /mnt and provide some directories needed later on
+mkdir /mnt
+mount -t ext4 "$DISK"2 /mnt
+mkdir -p /mnt/{proc,dev,sys,boot/efi}
+mount -t vfat "$DISK"1 /mnt/boot/efi
+mount -o bind /proc /mnt/proc
+mount -o bind /dev /mnt/dev
+mount -o bind /dev/pts /mnt/dev/pts
+mount -t sysfs sysfs /mnt/sys
+
+# Make the Nix store available in /mnt, because that's where the .debs live.
+mkdir -p /mnt/inst${NIX_STORE_DIR}
+mount -o bind ${NIX_STORE_DIR} /mnt/inst${NIX_STORE_DIR}
+
+# Ubuntu Noble requires merged /usr directories scheme
+mkdir -p /mnt/usr/{bin,sbin,lib,lib64}
+ln -s /usr/bin /mnt/bin
+ln -s /usr/sbin /mnt/sbin
+ln -s /usr/lib /mnt/lib
+ln -s /usr/lib64 /mnt/lib64
+
+echo "Unpacking predependencies..."
+
+for component in "${debsStage0[@]}"; do
+    for deb in $component; do
+        echo "$deb..."
+        dpkg-deb --extract "$deb" /mnt
+    done
+done
+
+echo "Installing Debs..."
+
+for component in "${debsStage0[@]}" "${debsStage1[@]}"; do
+    echo
+    echo ">>> INSTALLING COMPONENT: $component"
+    debs=
+    for i in $component; do
+        debs="$debs /inst$i"
+    done
+
+    my_chroot /mnt dpkg --install $debs < /dev/null
+done
+
+# Unmount everything
+umount /mnt/inst${NIX_STORE_DIR}
+umount /mnt/boot/efi
+umount /mnt/sys
+umount /mnt/proc
+umount /mnt/dev/pts
+umount /mnt/dev
+umount /mnt

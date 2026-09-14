@@ -14,28 +14,32 @@
       OSName = "RaphOS";
       OSVersion = "1.0.0";
 
-      OSImage = pkgs.callPackage ./OS-image { inherit OSName OSVersion; };
+      OSImageDerivations = pkgs.callPackage ./OS-image {
+        inherit OSName OSVersion;
+        buildSystem = system;
+      };
 
-      bootstrapper = nixpkgs.lib.nixosSystem {
+      bootstrapper-lite = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = {
           inherit
             inputs
             OSName
-            OSImage
             OSVersion
             ;
+          OSImage = OSImageDerivations.OSLiteRawImage;
+          OSVariant = "lite";
         };
         modules = [ ./bootstrapper-config ];
       };
 
     in
     {
-      nixosConfigurations = { inherit bootstrapper; };
+      nixosConfigurations = { inherit bootstrapper-lite; };
 
-      packages.${system} = {
-        inherit OSImage;
-        default = bootstrapper.config.system.build.isoImage;
+      packages.${system} = OSImageDerivations // rec {
+        lite = bootstrapper-lite.config.system.build.isoImage;
+        default = lite;
       };
 
       formatter.${system} = pkgs.nixfmt-tree;
