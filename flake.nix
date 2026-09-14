@@ -14,10 +14,12 @@
       OSName = "RaphOS";
       OSVersion = "1.0.0";
 
-      OSImageDerivations = pkgs.callPackage ./OS-image {
-        inherit OSName OSVersion;
-        buildSystem = system;
-      };
+      OSImageDerivations = pkgs.lib.filterAttrs (_: v: pkgs.lib.isDerivation v) (
+        pkgs.callPackage ./OS-image {
+          inherit OSName OSVersion;
+          buildSystem = system;
+        }
+      );
 
       bootstrapper-lite = nixpkgs.lib.nixosSystem {
         inherit system;
