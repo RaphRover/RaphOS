@@ -1,9 +1,4 @@
-{
-  OSName,
-  OSVersion,
-  stdenv,
-  fetchurl,
-}:
+{ stdenv, fetchurl }:
 let
   fictionlab-archive-keyring = (
     fetchurl {
@@ -16,16 +11,7 @@ in
 stdenv.mkDerivation {
   name = "files";
   src = ./.;
-  phases = [
-    "unpackPhase"
-    "patchPhase"
-    "installPhase"
-  ];
-
-  patchPhase = ''
-    sed -i "s|@OS_NAME@|${OSName}|g" etc/custom-os-release
-    sed -i "s|@OS_VERSION@|${OSVersion}|g" etc/custom-os-release
-  '';
+  phases = [ "unpackPhase" "installPhase" ];
 
   installPhase = ''
     # Copy the keyrings

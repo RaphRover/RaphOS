@@ -1,5 +1,23 @@
 {
   "nodes": {
+    "nix-debian-image-builder": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1791299383,
+        "narHash": "sha256-dJxYXreKqf4z5INCP14hEHLEeULKHZM/E140l0ou+lg=",
+        "owner": "fictionlab",
+        "repo": "nix-debian-image-builder",
+        "rev": "cf9d6ff5624c0e2fe3769e4d5caf91824fb267ce",
+        "type": "github"
+      },
+      "original": {
+        "owner": "fictionlab",
+        "repo": "nix-debian-image-builder",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1788372231,
@@ -11,14 +29,18 @@
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
+        "rev": "9387b3fcc0c23c86661636da63faabad4235a0a6",
         "type": "github"
       }
     },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nix-debian-image-builder": "nix-debian-image-builder",
+        "nixpkgs": [
+          "nix-debian-image-builder",
+          "nixpkgs"
+        ]
       }
     }
   },
