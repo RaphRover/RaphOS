@@ -193,7 +193,7 @@ let
     ];
   }) { inherit fetchurl; };
 
-  exportStage = stageNr: map toString (builtins.elemAt debsClosure stageNr);
+  exportStage = stageNr: builtins.elemAt debsClosure stageNr;
 
   debsStage0 = exportStage 0;
   debsStage1 = exportStage 1;
@@ -260,7 +260,5 @@ rec {
     osVersion = OSVersion;
     variant = "lite";
     filename = "OS.img";
-    additionalSectors = 34;
-    repairGpt = true;
   };
 }

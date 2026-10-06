@@ -1,9 +1,10 @@
-{ files, imageBuilder, pkgs }:
-let
-  mkScript = imageBuilder.mkScript;
-in
 {
-  stage1 = mkScript {
+  files,
+  imageBuilder,
+  pkgs,
+}:
+{
+  stage1 = imageBuilder.mkScript {
     name = "scripts-stage1";
     src = ./buildStage1.sh;
     packages = with pkgs; [
@@ -14,55 +15,41 @@ in
       gptfdisk
       util-linux
     ];
-    environment = { NIX_STORE_DIR = builtins.storeDir; };
   };
 
-  stage2 = mkScript {
+  stage2 = imageBuilder.mkInstallDebsScript {
     name = "scripts-stage2";
-    src = imageBuilder.stageScripts.installDebs;
-    packages = with pkgs; [ coreutils util-linux ];
     environment = {
-      NIX_STORE_DIR = builtins.storeDir;
       BOOT_MOUNT = "/boot/efi";
-      CLEAN_CHROOT_ENV = "false";
     };
   };
 
-  stage3 = mkScript {
+  stage3 = imageBuilder.mkInstallDebsScript {
     name = "scripts-stage3";
-    src = imageBuilder.stageScripts.installDebs;
-    packages = with pkgs; [ coreutils util-linux ];
     environment = {
-      NIX_STORE_DIR = builtins.storeDir;
       BOOT_MOUNT = "/boot/efi";
-      CLEAN_CHROOT_ENV = "false";
     };
   };
 
-  stage4 = mkScript {
+  stage4 = imageBuilder.mkScript {
     name = "scripts-stage4";
     src = ./buildStage4.sh;
-    packages = with pkgs; [ coreutils gnused systemd util-linux ];
+    packages = with pkgs; [
+      coreutils
+      gnused
+      systemd
+      util-linux
+    ];
     environment = {
       FILES_DIR = files;
       UDEVD = "${pkgs.systemd}/lib/systemd/systemd-udevd";
     };
   };
 
-  stageFinal = mkScript {
+  stageFinal = imageBuilder.mkFinalizeImageScript {
     name = "scripts-stageFinal";
-    src = imageBuilder.stageScripts.finalizeImage;
-    packages = with pkgs; [
-      coreutils
-      e2fsprogs
-      findutils
-      gawk
-      gnugrep
-      gnused
-      parted
-      util-linux
-      zerofree
-    ];
-    environment = { BOOT_MOUNT = "/boot/efi"; };
+    environment = {
+      BOOT_MOUNT = "/boot/efi";
+    };
   };
 }
