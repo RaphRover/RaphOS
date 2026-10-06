@@ -10,7 +10,7 @@ let
   imageSize = 8192;
   memSize = 4096;
 
-  files = pkgs.callPackage ./files { inherit OSName OSVersion; };
+  files = pkgs.callPackage ./files { };
 
   scripts = pkgs.callPackage ./scripts { inherit files imageBuilder; };
 
