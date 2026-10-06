@@ -43,7 +43,7 @@ Subsequent builds will be faster, as Nix caches the dependencies.
 
 To rebuild only the RaphOS image, you can run:
 ```bash
-nix build -Lv .#OSImage
+nix build -Lv .#OSLiteRawImage
 ```
 
 ## Flashing the image
