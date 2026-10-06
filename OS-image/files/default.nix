@@ -1,16 +1,26 @@
-
-
-{ OSName, OSVersion, stdenv, fetchurl }:
+{
+  OSName,
+  OSVersion,
+  stdenv,
+  fetchurl,
+}:
 let
-  fictionlab-archive-keyring = (fetchurl {
-    url = "https://archive.fictionlab.pl/fictionlab.gpg";
-    sha256 = "sha256-noqi5NcMDrnwMp9JFVUrLJkH65WH9/EDISQIVT8Hnf8=";
-  });
+  fictionlab-archive-keyring = (
+    fetchurl {
+      url = "https://archive.fictionlab.pl/fictionlab.gpg";
+      sha256 = "sha256-noqi5NcMDrnwMp9JFVUrLJkH65WH9/EDISQIVT8Hnf8=";
+    }
+  );
 
-in stdenv.mkDerivation {
+in
+stdenv.mkDerivation {
   name = "files";
   src = ./.;
-  phases = [ "unpackPhase" "patchPhase" "installPhase" ];
+  phases = [
+    "unpackPhase"
+    "patchPhase"
+    "installPhase"
+  ];
 
   patchPhase = ''
     sed -i "s|@OS_NAME@|${OSName}|g" etc/custom-os-release

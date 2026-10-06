@@ -1,5 +1,7 @@
 #!/bin/sh -e
 
+source $NIX_ATTRS_SH_FILE
+
 # Configuration
 USER_NAME=raph
 USER_PASS=raph
@@ -23,6 +25,7 @@ partx -u "$DISK"
 mkfs.vfat -F32 -n ESP "$DISK"1
 # Make an ext4 filesystem for the system root
 mkfs.ext4 "$DISK"2 -L root
+ROOT_UUID=$(blkid -s UUID -o value "$DISK"2)
 
 # Mount everything to /mnt and provide some directories needed later on
 mkdir /mnt
@@ -45,32 +48,28 @@ ln -s /usr/sbin /mnt/sbin
 ln -s /usr/lib /mnt/lib
 ln -s /usr/lib64 /mnt/lib64
 
-DEBS_STAGE0_FILES=$(cat ${debsStage0})
-DEBS_STAGE1_FILES=$(cat ${debsStage1})
-
 echo "Unpacking predependencies..."
 
-for deb in ${DEBS_STAGE0_FILES}; do
-    [ "$deb" = "|" ] && continue
-    echo "$deb..."
-    dpkg-deb --extract "$deb" /mnt
+for component in "${debsStage0[@]}"; do
+    for deb in $component; do
+        echo "$deb..."
+        dpkg-deb --extract "$deb" /mnt
+    done
 done
 
 echo "Installing Debs..."
 
-oldIFS="$IFS"
-IFS="|"
-for component in ${DEBS_STAGE0_FILES} ${DEBS_STAGE1_FILES}; do
-    IFS="$oldIFS"
+for component in "${debsStage0[@]}" "${debsStage1[@]}"; do
     echo
     echo ">>> INSTALLING COMPONENT: $component"
     debs=
     for i in $component; do
-        debs="$debs /inst$i";
+        debs="$debs /inst$i"
     done
 
     my_chroot /mnt dpkg --install $debs < /dev/null
 done
+
 
 # Remove redundant files
 rm -rf /mnt/etc/update-motd.d/*
@@ -159,6 +158,13 @@ systemctl enable systemd-networkd
 # Enable tmpfs on /tmp
 systemctl enable tmp.mount
 CHROOT
+
+# grub-mkconfig's auto-detection can still fail to resolve a UUID for the
+# VM's root device and silently fall back to the raw device path (e.g.
+# /dev/vda2), which won't exist on the real hardware. Rewrite every
+# root= kernel argument already present in the generated config to use
+# the actual filesystem UUID.
+sed -i -E "s|root=[^ \"]+|root=UUID=${ROOT_UUID}|g" /mnt/boot/grub/grub.cfg
 
 # Remove backup files
 find "/mnt/etc" -type f -name "*-" -exec rm -v {} \;

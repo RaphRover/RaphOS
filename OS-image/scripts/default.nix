@@ -1,9 +1,18 @@
-{ files, pkgs, stdenv, makeWrapper }:
+{
+  files,
+  pkgs,
+  stdenv,
+  makeWrapper,
+}:
 stdenv.mkDerivation {
   name = "scripts";
   src = ./.;
   nativeBuildInputs = [ makeWrapper ];
-  phases = [ "unpackPhase" "installPhase" "postFixup" ];
+  phases = [
+    "unpackPhase"
+    "installPhase"
+    "postFixup"
+  ];
   installPhase = ''
     mkdir -p $out
     cp -vr $src/build.sh $out

@@ -1,9 +1,16 @@
-{ OSName, OSImage, OSVersion, lib, pkgs, inputs, ... }:
+{
+  OSName,
+  OSImage,
+  OSVersion,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 
 {
   imports = [
-    (inputs.nixpkgs
-      + "/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix")
+    (inputs.nixpkgs + "/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix")
   ];
 
   networking.hostName = "bootstrapper";
@@ -23,41 +30,43 @@
 
   services.openssh.enable = lib.mkForce false;
 
-  networking.wireless.enable = false;
+  networking.wireless.enable = lib.mkForce false;
   networking.firewall.enable = false;
   networking.useDHCP = false;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with pkgs;
-    [
-      (stdenv.mkDerivation {
-        name = "bootstrapper-scripts";
-        src = ./scripts;
+  environment.systemPackages = with pkgs; [
+    (stdenv.mkDerivation {
+      name = "bootstrapper-scripts";
+      src = ./scripts;
 
-        nativeBuildInputs = [ bash makeWrapper ];
+      nativeBuildInputs = [
+        bash
+        makeWrapper
+      ];
 
-        buildPhase = ''
-          mkdir -p $out/bin
-          install -t $out/bin ./install-os
-        '';
+      buildPhase = ''
+        mkdir -p $out/bin
+        install -t $out/bin ./install-os
+      '';
 
-        postFixup = ''
-          wrapProgram $out/bin/install-os \
-            --set PATH ${
-              lib.makeBinPath [
-                coreutils
-                dmidecode
-                e2fsprogs
-                gptfdisk
-                inotify-tools
-                (python312Packages.python.withPackages (ps: [ ps.pyparted ]))
-                util-linuxMinimal
-              ]
-            } --set OS_IMG_FILE "${OSImage}/OS.img"
-        '';
-      })
-    ];
+      postFixup = ''
+        wrapProgram $out/bin/install-os \
+          --set PATH ${
+            lib.makeBinPath [
+              coreutils
+              dmidecode
+              e2fsprogs
+              gptfdisk
+              inotify-tools
+              (python312Packages.python.withPackages (ps: [ ps.pyparted ]))
+              util-linux
+            ]
+          } --set OS_IMG_FILE "${OSImage}/OS.img"
+      '';
+    })
+  ];
 
   users.users.nixos.shell = pkgs.stdenv.mkDerivation {
     name = "bootstrapper-sh";
@@ -70,9 +79,10 @@
       install -t $out/bin ./bootstrapper-sh
     '';
 
-    passthru = { shellPath = "/bin/bootstrapper-sh"; };
+    passthru = {
+      shellPath = "/bin/bootstrapper-sh";
+    };
   };
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "26.11";
 }
-
