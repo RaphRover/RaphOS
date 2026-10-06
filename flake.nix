@@ -2,11 +2,12 @@
   description = "A flake to build a RaphOS bootstrapper and OS image";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nix-debian-image-builder.url = "github:fictionlab/nix-debian-image-builder";
+    nixpkgs.follows = "nix-debian-image-builder/nixpkgs";
   };
 
   outputs =
-    { self, nixpkgs, ... }@inputs:
+    { self, nix-debian-image-builder, nixpkgs, ... }@inputs:
     let
       system = "x86_64-linux";
       pkgs = (import nixpkgs) { inherit system; };
@@ -17,6 +18,7 @@
       OSImageDerivations = pkgs.lib.filterAttrs (_: v: pkgs.lib.isDerivation v) (
         pkgs.callPackage ./OS-image {
           inherit OSName OSVersion;
+          imageBuilder = nix-debian-image-builder.lib system;
           buildSystem = system;
         }
       );

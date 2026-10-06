@@ -1,22 +1,18 @@
 {
   OSName,
   OSVersion,
-  lib,
+  imageBuilder,
   pkgs,
-  vmTools,
   fetchurl,
-  stdenv,
   ...
 }:
 let
   imageSize = 8192;
   memSize = 4096;
 
-  tools = import ./tools.nix { inherit lib pkgs; };
-
   files = pkgs.callPackage ./files { inherit OSName OSVersion; };
 
-  scripts = pkgs.callPackage ./scripts { inherit files; };
+  scripts = pkgs.callPackage ./scripts { inherit files imageBuilder; };
 
   packageLists =
     let
@@ -87,7 +83,7 @@ let
       }
     ];
 
-  debsClosure = import (tools.debClosureGenerator {
+  debsClosure = import (imageBuilder.mkDebClosureGenerator {
     name = "debs-closure";
     inherit packageLists;
     packages = [
@@ -204,172 +200,67 @@ let
   debsStage2 = exportStage 2;
   debsStage3 = exportStage 3;
 
-  # QEMU drops console output under nix-build, so the build logs to
-  # xchg/build.log instead, tailed here on the host. Tail gets its own
-  # private fd (3) so QEMU can't make it non-blocking and kill it with EAGAIN.
-  vmLogPrepareCommand = ''
-    touch xchg/build.log
-    exec 3>/proc/self/fd/1
-    tail -n +1 -f xchg/build.log >&3 &
-    tailPid=$!
-    trap 'kill "$tailPid" 2>/dev/null || true' EXIT
-  '';
+  imageStages = imageBuilder.mkImageStageChain {
+    name = "OS";
+    inherit imageSize memSize;
+    qemuImg = pkgs.qemu_kvm;
+    logOutput = true;
+    stages = [
+      {
+        name = "stage1";
+        outputName = "OSStage1Image";
+        script = scripts.stage1;
+        env = { inherit debsStage0 debsStage1; };
+        debInputs = [ debsStage0 debsStage1 ];
+      }
+      {
+        name = "stage2";
+        outputName = "OSStage2Image";
+        script = scripts.stage2;
+        env = { debsStage = debsStage2; };
+        debInputs = [ debsStage2 ];
+      }
+      {
+        name = "stage3";
+        outputName = "OSStage3Image";
+        script = scripts.stage3;
+        env = { debsStage = debsStage3; };
+        debInputs = [ debsStage3 ];
+      }
+      {
+        name = "stage4";
+        outputName = "OSStage4Image";
+        script = scripts.stage4;
+      }
+    ];
+  };
 in
 rec {
-  OSStage1Image = vmTools.runInLinuxVM (
-    stdenv.mkDerivation {
-      inherit memSize debsStage0 debsStage1;
+  OSStage1Image = imageStages.OSStage1Image;
+  OSStage2Image = imageStages.OSStage2Image;
+  OSStage3Image = imageStages.OSStage3Image;
+  OSStage4Image = imageStages.OSStage4Image;
 
-      pname = "OS-stage1-image";
-      version = "";
-
-      preVM = ''
-        mkdir -p $out
-        diskImage=$out/OS.img
-        ${pkgs.qemu_kvm}/bin/qemu-img create -f qcow2 $diskImage "${toString imageSize}M"
-
-        ${vmLogPrepareCommand}
-      '';
-
-      buildCommand = ''
-        ${scripts.stage1}/build.sh > /tmp/xchg/build.log 2>&1
-        mkdir -p "$out/nix-support"
-        echo ${
-          toString [
-            debsStage0
-            debsStage1
-          ]
-        } > $out/nix-support/deb-inputs
-      '';
-    }
-  );
-
-  OSStage2Image = vmTools.runInLinuxVM (
-    stdenv.mkDerivation {
-      inherit memSize debsStage2;
-
-      pname = "OS-stage2-image";
-      version = "";
-
-      preVM = ''
-        mkdir -p $out
-        diskImage=$out/OS.img
-        ${pkgs.qemu_kvm}/bin/qemu-img create \
-          -o backing_file=${OSStage1Image}/OS.img,backing_fmt=qcow2 \
-          -f qcow2 $diskImage
-
-        ${vmLogPrepareCommand}
-      '';
-
-      buildCommand = ''
-        ${scripts.stage2}/build.sh > /tmp/xchg/build.log 2>&1
-
-        mkdir -p $out/nix-support
-        echo ${OSStage1Image}/OS.img > $out/nix-support/backing_image
-        echo ${toString debsStage2} > $out/nix-support/deb-inputs
-      '';
-    }
-  );
-
-  OSStage3Image = vmTools.runInLinuxVM (
-    stdenv.mkDerivation {
-      inherit memSize debsStage3;
-
-      pname = "OS-stage3-image";
-      version = "";
-
-      preVM = ''
-        mkdir -p $out
-        diskImage=$out/OS.img
-        ${pkgs.qemu_kvm}/bin/qemu-img create \
-          -o backing_file=${OSStage2Image}/OS.img,backing_fmt=qcow2 \
-          -f qcow2 $diskImage
-
-        ${vmLogPrepareCommand}
-      '';
-
-      buildCommand = ''
-        ${scripts.stage3}/build.sh > /tmp/xchg/build.log 2>&1
-
-        mkdir -p $out/nix-support
-        echo ${OSStage2Image}/OS.img > $out/nix-support/backing_image
-        echo ${toString debsStage3} > $out/nix-support/deb-inputs
-      '';
-    }
-  );
-
-  OSStage4Image = vmTools.runInLinuxVM (
-    stdenv.mkDerivation {
-      inherit memSize;
-
-      pname = "OS-stage4-image";
-      version = "";
-
-      preVM = ''
-        mkdir -p $out
-        diskImage=$out/OS.img
-        ${pkgs.qemu_kvm}/bin/qemu-img create \
-          -o backing_file=${OSStage3Image}/OS.img,backing_fmt=qcow2 \
-          -f qcow2 $diskImage
-
-        ${vmLogPrepareCommand}
-      '';
-
-      buildCommand = ''
-        ${scripts.stage4}/build.sh > /tmp/xchg/build.log 2>&1
-
-        mkdir -p $out/nix-support
-        echo ${OSStage3Image}/OS.img > $out/nix-support/backing_image
-      '';
-    }
-  );
-
-  OSLiteImage = vmTools.runInLinuxVM (
-    stdenv.mkDerivation rec {
-      inherit OSName OSVersion memSize;
-      OSVariant = "lite";
-
-      pname = "${OSName}-${OSVariant}-image";
-      version = OSVersion;
-
-      preVM = ''
-        mkdir -p $out
-        diskImage=$out/OS.img
-        ${pkgs.buildPackages.qemu_kvm}/bin/qemu-img create \
-          -o backing_file=${OSStage4Image}/OS.img,backing_fmt=qcow2 \
-          -f qcow2 $diskImage
-        ${vmLogPrepareCommand}
-      '';
-
-      buildCommand = ''
-        ${scripts.stageFinal}/build.sh > /tmp/xchg/build.log 2>&1
-
-        mkdir -p $out/nix-support
-        echo ${OSStage4Image}/OS.img > $out/nix-support/backing_image
-      '';
-    }
-  );
-
-  OSLiteRawImage = stdenv.mkDerivation rec {
-    OSVariant = "lite";
-
-    pname = "${OSName}-${OSVariant}-raw-image";
+  OSLiteImage = imageBuilder.mkQcow2ImageStage {
+    pname = "${OSName}-lite-image";
     version = OSVersion;
+    inherit memSize;
+    previousImage = OSStage4Image;
+    script = scripts.stageFinal;
+    logOutput = true;
+    env = {
+      inherit OSName OSVersion;
+      OSVariant = "lite";
+    };
+  };
 
-    buildCommand = ''
-      mkdir -p $out
-      diskImage=$out/OS.img
-      ${pkgs.buildPackages.qemu_kvm}/bin/qemu-img convert -f qcow2 -O raw \
-        ${OSLiteImage}/OS.img $diskImage
-
-      # Shrink the disk image
-      LAST_SECTOR=$(${pkgs.parted}/bin/parted $diskImage -ms unit s print | tail -n +3 | cut -d: -f3 | sed 's/s//' | sort -n | tail -1)
-      GPT_BACKUP_TABLE_SECTORS=34
-      SECTOR_SIZE=512
-      DISK_SIZE=$(( (LAST_SECTOR + GPT_BACKUP_TABLE_SECTORS) * SECTOR_SIZE ))
-
-      ${pkgs.qemu_kvm}/bin/qemu-img resize --shrink -f raw $diskImage $DISK_SIZE
-      ${pkgs.gptfdisk}/bin/sgdisk -e $diskImage
-    '';
+  OSLiteRawImage = imageBuilder.mkRawImage {
+    image = OSLiteImage;
+    osName = OSName;
+    osVersion = OSVersion;
+    variant = "lite";
+    filename = "OS.img";
+    additionalSectors = 34;
+    repairGpt = true;
   };
 }
