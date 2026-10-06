@@ -2,6 +2,7 @@
   OSName,
   OSImage,
   OSVersion,
+  OSVariant,
   lib,
   pkgs,
   inputs,
@@ -17,7 +18,7 @@
 
   time.timeZone = "Europe/London";
 
-  image.baseName = lib.mkForce "${OSName}-bootstrapper-${OSVersion}";
+  image.baseName = lib.mkForce "${OSName}-bootstrapper-${OSVersion}-${OSVariant}";
 
   isoImage = {
     makeBiosBootable = false;

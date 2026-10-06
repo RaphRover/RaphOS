@@ -1,6 +1,8 @@
-#!/bin/sh -e
+#!/usr/bin/env bash -e
 
 source $NIX_ATTRS_SH_FILE
+
+DISK=/dev/vda
 
 # Configuration
 USER_NAME=raph
@@ -13,20 +15,6 @@ my_chroot() {
     $(type -tP chroot) $@
 }
 
-DISK=/dev/vda
-# Create partition table
-sgdisk $DISK \
-    -n1:0:+100M -t1:ef00 -c1:esp \
-    -n2:0:0 -t2:8300 -c2:root
-
-# Ensure that the partition block devices (/dev/vda1 etc) exist
-partx -u "$DISK"
-# Make a FAT filesystem for the EFI System Partition
-mkfs.vfat -F32 -n ESP "$DISK"1
-# Make an ext4 filesystem for the system root
-mkfs.ext4 "$DISK"2 -L root
-ROOT_UUID=$(blkid -s UUID -o value "$DISK"2)
-
 # Mount everything to /mnt and provide some directories needed later on
 mkdir /mnt
 mount -t ext4 "$DISK"2 /mnt
@@ -36,40 +24,6 @@ mount -o bind /proc /mnt/proc
 mount -o bind /dev /mnt/dev
 mount -o bind /dev/pts /mnt/dev/pts
 mount -t sysfs sysfs /mnt/sys
-
-# Make the Nix store available in /mnt, because that's where the .debs live.
-mkdir -p /mnt/inst${NIX_STORE_DIR}
-mount -o bind ${NIX_STORE_DIR} /mnt/inst${NIX_STORE_DIR}
-
-# Ubuntu Noble requires merged /usr directories scheme
-mkdir -p /mnt/usr/{bin,sbin,lib,lib64}
-ln -s /usr/bin /mnt/bin
-ln -s /usr/sbin /mnt/sbin
-ln -s /usr/lib /mnt/lib
-ln -s /usr/lib64 /mnt/lib64
-
-echo "Unpacking predependencies..."
-
-for component in "${debsStage0[@]}"; do
-    for deb in $component; do
-        echo "$deb..."
-        dpkg-deb --extract "$deb" /mnt
-    done
-done
-
-echo "Installing Debs..."
-
-for component in "${debsStage0[@]}" "${debsStage1[@]}"; do
-    echo
-    echo ">>> INSTALLING COMPONENT: $component"
-    debs=
-    for i in $component; do
-        debs="$debs /inst$i"
-    done
-
-    my_chroot /mnt dpkg --install $debs < /dev/null
-done
-
 
 # Remove redundant files
 rm -rf /mnt/etc/update-motd.d/*
@@ -164,45 +118,12 @@ CHROOT
 # /dev/vda2), which won't exist on the real hardware. Rewrite every
 # root= kernel argument already present in the generated config to use
 # the actual filesystem UUID.
+ROOT_UUID=$(blkid -s UUID -o value "$DISK"2)
 sed -i -E "s|root=[^ \"]+|root=UUID=${ROOT_UUID}|g" /mnt/boot/grub/grub.cfg
 
-# Remove backup files
-find "/mnt/etc" -type f -name "*-" -exec rm -v {} \;
-find "/mnt/var" -type f -name "*-old" -exec rm -v {} \;
-
-# Truncate all logs
-find "/mnt/var/log/" -type f -exec cp -v /dev/null {} \;
-
-# Clear up /run directory
-rm -v -rf "/mnt/run/"*
-
-umount /mnt/inst${NIX_STORE_DIR}
 umount /mnt/boot/efi
 umount /mnt/sys
 umount /mnt/proc
 umount /mnt/dev/pts
 umount /mnt/dev
 umount /mnt
-
-# Zero out free space
-zerofree -v "$DISK"2
-
-# Shrink the filesystem to fit the data
-e2fsck -vfy "$DISK"2
-resize2fs -M "$DISK"2
-
-START_SECTOR=$(parted "$DISK" unit s print | awk '$1 == 2 {print $2}' | sed 's/s//')
-
-# Get sector size in bytes
-SECTOR_SIZE=$(cat /sys/block/$(basename $DISK)/queue/hw_sector_size)
-
-# Calculate total sectors for new size
-NEW_SIZE_BYTES=$(dumpe2fs -h ${DISK}2 | grep "Block count:" | awk '{print $3 * 4096}')
-NEW_SIZE_SECTORS=$((NEW_SIZE_BYTES / SECTOR_SIZE))
-NEW_END_SECTOR=$((START_SECTOR + NEW_SIZE_SECTORS - 1))
-
-parted $DISK ---pretend-input-tty <<EOF
-resizepart 2 ${NEW_END_SECTOR}s
-Yes
-print free
-EOF
