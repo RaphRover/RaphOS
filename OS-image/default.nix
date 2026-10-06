@@ -260,5 +260,6 @@ rec {
     osVersion = OSVersion;
     variant = "lite";
     filename = "OS.img";
+    repairGpt = true;
   };
 }
