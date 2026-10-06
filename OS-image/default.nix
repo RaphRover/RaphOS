@@ -228,11 +228,7 @@ rec {
         diskImage=$out/OS.img
         ${pkgs.qemu_kvm}/bin/qemu-img create -f qcow2 $diskImage "${toString imageSize}M"
 
-        touch xchg/build.log
-        exec 3>/proc/self/fd/1
-        tail -n +1 -f xchg/build.log >&3 &
-        tailPid=$!
-        trap 'kill "$tailPid" 2>/dev/null || true' EXIT
+        ${vmLogPrepareCommand}
       '';
 
       buildCommand = ''
@@ -245,17 +241,6 @@ rec {
           ]
         } > $out/nix-support/deb-inputs
       '';
-
-      #   postVM = ''
-      #     # Shrink the disk image
-      #     LAST_SECTOR=$(${pkgs.parted}/bin/parted $diskImage -ms unit s print | tail -n +3 | cut -d: -f3 | sed 's/s//' | sort -n | tail -1)
-      #     GPT_BACKUP_TABLE_SECTORS=34
-      #     SECTOR_SIZE=512
-      #     DISK_SIZE=$(( (LAST_SECTOR + GPT_BACKUP_TABLE_SECTORS) * SECTOR_SIZE ))
-
-      #     ${pkgs.qemu_kvm}/bin/qemu-img resize --shrink -f raw $diskImage $DISK_SIZE
-      #     ${pkgs.gptfdisk}/bin/sgdisk -e $diskImage
-      #   '';
     }
   );
 
