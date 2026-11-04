@@ -69,6 +69,9 @@ done
 chown ${USER_NAME}:${USER_NAME} -R "/etc/ros"
 chown root:root -R "/etc/ros/rosdep"
 
+# Provision the persistent cache written by the ROS system node and read by SSH MOTD.
+install -d -m 755 -o ${USER_NAME} -g ${USER_NAME} /var/lib/raph/firmware-status
+
 # Do the rest of the commands as the default user
 su - ${USER_NAME}
 set -ex
