@@ -51,9 +51,7 @@ def render_status(data: dict, now: float) -> str:
         lines.extend(
             (
                 "A newer firmware is available from the installed raph_fw package.",
-                "Stop driving and put RaphCore into recovery mode before updating.",
-                "Update on the robot: ros2 run raph_fw update",
-                "Confirm the flash, then power-cycle the device to apply the update.",
+                "To update the firmware, see: https://docs.fictionlab.pl/raph-rover/guides/firmware-update",
             )
         )
     elif state == "up_to_date":
