@@ -1,0 +1,88 @@
+#!/usr/bin/python3
+
+"""Display cached firmware status without starting ROS or making network requests."""
+
+import json
+import sys
+import time
+from pathlib import Path
+
+STATUS_PATH = Path("/var/lib/raph/firmware-status/status.json")
+MAX_AGE = 30 * 60
+
+
+def plain_text(value: str) -> str:
+    """Prevent cached strings from introducing terminal control sequences."""
+    return "".join(character for character in value if character.isprintable())
+
+
+def render_status(data: dict, now: float) -> str:
+    """Render a validated snapshot, marking stale information explicitly."""
+    state = data["status"]
+    current = data["current_version"]
+    target = data["target_version"]
+    checked_at = data["checked_at"]
+    message = data["status_message"]
+    if (
+        state
+        not in (
+            "up_to_date",
+            "update_available",
+            "running_newer",
+            "incomparable",
+            "unavailable",
+        )
+        or not all(isinstance(value, str) for value in (current, target, message))
+        or type(checked_at) is not int
+        or checked_at <= 0
+    ):
+        raise ValueError("Invalid firmware status snapshot")
+
+    lines = [
+        f"RaphCore firmware: running {plain_text(current) or 'unknown'}; "
+        f"packaged target {plain_text(target) or 'unknown'}",
+    ]
+    age = now - checked_at
+    if age < 0 or age > MAX_AGE:
+        lines.append(
+            "Firmware status is stale. Wait for the robot's next check; do not rely on it."
+        )
+    elif state == "update_available":
+        lines.extend(
+            (
+                "A newer firmware is available from the installed raph_fw package.",
+                "To update the firmware, see: https://docs.fictionlab.pl/raph-rover/guides/firmware-update",
+            )
+        )
+    elif state == "up_to_date":
+        lines.append("Firmware matches the installed package.")
+    elif state == "running_newer":
+        lines.append(
+            "Running firmware is newer than the packaged image. No downgrade recommended."
+        )
+    elif state == "incomparable":
+        lines.append(
+            "Firmware versions cannot be ordered safely. No update recommended."
+        )
+    else:
+        lines.append(f"Firmware update check unavailable: {plain_text(message)}")
+    return "\n".join(lines) + "\n"
+
+
+def main() -> None:
+    """Read only the local snapshot so controller downtime cannot delay SSH login."""
+    try:
+        data = json.loads(STATUS_PATH.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError("Firmware snapshot must be an object")
+        output = render_status(data, time.time())
+    except FileNotFoundError:
+        output = "RaphCore firmware status not available yet. The robot checks it in the background.\n"
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        print(f"Cannot read firmware notification cache: {exc}", file=sys.stderr)
+        output = "RaphCore firmware update status unavailable (invalid or unreadable cache).\n"
+    sys.stdout.write(output)
+
+
+if __name__ == "__main__":
+    main()
