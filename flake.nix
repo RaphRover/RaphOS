@@ -7,7 +7,12 @@
   };
 
   outputs =
-    { self, nix-debian-image-builder, nixpkgs, ... }@inputs:
+    {
+      self,
+      nix-debian-image-builder,
+      nixpkgs,
+      ...
+    }@inputs:
     let
       system = "x86_64-linux";
       pkgs = (import nixpkgs) { inherit system; };

@@ -11,7 +11,10 @@ in
 stdenv.mkDerivation {
   name = "files";
   src = ./.;
-  phases = [ "unpackPhase" "installPhase" ];
+  phases = [
+    "unpackPhase"
+    "installPhase"
+  ];
 
   installPhase = ''
     # Copy the keyrings
