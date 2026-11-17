@@ -12,7 +12,9 @@ let
 
   files-lite = pkgs.callPackage ./files-lite { };
 
-  scripts = pkgs.callPackage ./scripts { inherit files-lite imageBuilder; };
+  files-full = pkgs.callPackage ./files-full { };
+
+  scripts = pkgs.callPackage ./scripts { inherit files-lite files-full imageBuilder; };
 
   packageLists =
     let
@@ -190,6 +192,24 @@ let
       "ros-jazzy-micro-ros-agent"
       "ros-jazzy-raph-robot"
       "raph-ui"
+
+      "---"
+
+      # STAGE 4 - Desktop packages
+      "xorg" # X11 server
+      "xserver-xorg-video-fbdev" # X11 framebuffer driver
+      "lxqt" # Desktop environment
+      "openbox" # Window manager
+      "lightdm" # Display manager
+      "lightdm-gtk-greeter" # Greeter for lightdm
+      "accountsservice" # User account management
+      "gvfs" # Trash support
+      "lubuntu-artwork" # LXQt theme
+      "papirus-icon-theme" # LXQt icon theme
+      "kde-style-breeze" # LXQt color scheme
+      "breeze-cursor-theme" # LXQt cursor theme
+      "firefox-esr" # Web browser
+      "tigervnc-scraping-server" # VNC server
     ];
   }) { inherit fetchurl; };
 
@@ -199,6 +219,7 @@ let
   debsStage1 = exportStage 1;
   debsStage2 = exportStage 2;
   debsStage3 = exportStage 3;
+  debsStage4 = exportStage 4;
 
   imageStages = imageBuilder.mkImageStageChain {
     name = "OS";
@@ -232,6 +253,18 @@ let
         outputName = "OSStage4Image";
         script = scripts.stage4;
       }
+      {
+        name = "stage5";
+        outputName = "OSStage5Image";
+        script = scripts.stage5;
+        env = { debsStage = debsStage4; };
+        debInputs = [ debsStage4 ];
+      }
+      {
+        name = "stage6";
+        outputName = "OSStage6Image";
+        script = scripts.stage6;
+      }
     ];
   };
 in
@@ -240,6 +273,8 @@ rec {
   OSStage2Image = imageStages.OSStage2Image;
   OSStage3Image = imageStages.OSStage3Image;
   OSStage4Image = imageStages.OSStage4Image;
+  OSStage5Image = imageStages.OSStage5Image;
+  OSStage6Image = imageStages.OSStage6Image;
 
   OSLiteImage = imageBuilder.mkQcow2ImageStage {
     pname = "${OSName}-lite-image";
@@ -259,6 +294,28 @@ rec {
     osName = OSName;
     osVersion = OSVersion;
     variant = "lite";
+    filename = "OS.img";
+    repairGpt = true;
+  };
+
+  OSFullImage = imageBuilder.mkQcow2ImageStage {
+    pname = "${OSName}-full-image";
+    version = OSVersion;
+    inherit memSize;
+    previousImage = OSStage6Image;
+    script = scripts.stageFinal;
+    logOutput = true;
+    env = {
+      inherit OSName OSVersion;
+      OSVariant = "full";
+    };
+  };
+
+  OSFullRawImage = imageBuilder.mkRawImage {
+    image = OSFullImage;
+    osName = OSName;
+    osVersion = OSVersion;
+    variant = "full";
     filename = "OS.img";
     repairGpt = true;
   };

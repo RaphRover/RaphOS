@@ -1,5 +1,6 @@
 {
   files-lite,
+  files-full,
   imageBuilder,
   pkgs,
 }:
@@ -43,6 +44,26 @@
     environment = {
       FILES_DIR = files-lite;
       UDEVD = "${pkgs.systemd}/lib/systemd/systemd-udevd";
+    };
+  };
+
+  stage5 = imageBuilder.mkInstallDebsScript {
+    name = "scripts-stage5";
+    environment = {
+      BOOT_MOUNT = "/boot/efi";
+    };
+  };
+
+  stage6 = imageBuilder.mkScript {
+    name = "scripts-stage6";
+    src = ./buildStage6.sh;
+    packages = with pkgs; [
+      coreutils
+      gnused
+      util-linux
+    ];
+    environment = {
+      FILES_DIR = files-full;
     };
   };
 

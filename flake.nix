@@ -42,12 +42,28 @@
         modules = [ ./bootstrapper-config ];
       };
 
+      bootstrapper-full = nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = {
+          inherit
+            inputs
+            OSName
+            OSVersion
+            ;
+          OSImage = OSImageDerivations.OSFullRawImage;
+          OSVariant = "full";
+        };
+        modules = [ ./bootstrapper-config ];
+      };
+
     in
     {
-      nixosConfigurations = { inherit bootstrapper-lite; };
+      nixosConfigurations = { inherit bootstrapper-lite bootstrapper-full; };
 
       packages.${system} = OSImageDerivations // rec {
         lite = bootstrapper-lite.config.system.build.isoImage;
+        full = bootstrapper-full.config.system.build.isoImage;
+
         default = lite;
       };
 
