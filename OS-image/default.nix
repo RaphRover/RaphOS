@@ -10,9 +10,9 @@ let
   imageSize = 8192;
   memSize = 4096;
 
-  files = pkgs.callPackage ./files { };
+  files-lite = pkgs.callPackage ./files-lite { };
 
-  scripts = pkgs.callPackage ./scripts { inherit files imageBuilder; };
+  scripts = pkgs.callPackage ./scripts { inherit files-lite imageBuilder; };
 
   packageLists =
     let

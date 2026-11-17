@@ -1,5 +1,5 @@
 {
-  files,
+  files-lite,
   imageBuilder,
   pkgs,
 }:
@@ -41,7 +41,7 @@
       util-linux
     ];
     environment = {
-      FILES_DIR = files;
+      FILES_DIR = files-lite;
       UDEVD = "${pkgs.systemd}/lib/systemd/systemd-udevd";
     };
   };
