@@ -30,6 +30,9 @@ cp -vr --no-preserve=mode "${FILES_DIR}/"* /mnt/
 # Patch configuration files
 sed -i "s|Clearlooks|Lubuntu Arc|g" /mnt/etc/xdg/openbox/rc.xml
 
+# Fix file permissions
+chmod +x /mnt/etc/lightdm/headless-res.sh
+
 # Disable autostart applications
 echo "Hidden=true" >> /mnt/etc/xdg/autostart/lxqt-powermanagement.desktop
 
