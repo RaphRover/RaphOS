@@ -48,7 +48,7 @@ let
         packagesFile = (
           fetchurl {
             url = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-            sha256 = "sha256-jUUqjvW8Q+ECXPD4ZSIEJq7LiwlCkfWYayH+brgsQaA=";
+            sha256 = "sha256-M9hCEsPuHkLZQquLKdUebr8K3k7/2kKtzc7DPWWAjuc=";
           }
         );
         urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
@@ -58,7 +58,7 @@ let
         packagesFile = (
           fetchurl {
             url = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
-            sha256 = "sha256-xAOM/MifQN3fssngqwW+VEBawUfSsJVZ+THPYSdNsNo=";
+            sha256 = "sha256-erTe4skOs0F3S+cXGivRVNyEsARl43j6ukCgJU4EF8I=";
           }
         );
         urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
@@ -78,7 +78,7 @@ let
         packagesFile = (
           fetchurl {
             url = "https://archive.fictionlab.pl/dists/noble/main/binary-amd64/Packages.gz";
-            sha256 = "sha256-KrJjwMvTgWHSbMCzAxj7FCIxP0kLucg6AlalZq+7Bec=";
+            sha256 = "sha256-Ns4jsA3LxCZq1PEmgOWlpIrU3nYJ2NYeH4+LyvI50us=";
           }
         );
         urlPrefix = "https://archive.fictionlab.pl";
@@ -210,6 +210,9 @@ let
       "breeze-cursor-theme" # LXQt cursor theme
       "firefox-esr" # Web browser
       "tigervnc-scraping-server" # VNC server
+
+      "ros-jazzy-desktop"
+      "ros-jazzy-raph-desktop"
     ];
   }) { inherit fetchurl; };
 
