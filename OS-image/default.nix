@@ -235,22 +235,27 @@ let
         outputName = "OSStage1Image";
         script = scripts.stage1;
         env = { inherit debsStage0 debsStage1; };
-        debInputs = [ debsStage0 debsStage1 ];
+        debInputs = [
+          debsStage0
+          debsStage1
+        ];
       }
       {
         name = "stage2";
         outputName = "OSStage2Image";
         script = scripts.stage2;
-        env = { debsStage = debsStage2; };
-        debInputs = [ debsStage2 ];
-      }
         env = {
           debsStage = debsStage2;
         };
+        debInputs = [ debsStage2 ];
+      }
+      {
         name = "stage3";
         outputName = "OSStage3Image";
         script = scripts.stage3;
-        env = { debsStage = debsStage3; };
+        env = {
+          debsStage = debsStage3;
+        };
         debInputs = [ debsStage3 ];
       }
       {
@@ -262,7 +267,9 @@ let
         name = "stage5";
         outputName = "OSStage5Image";
         script = scripts.stage5;
-        env = { debsStage = debsStage4; };
+        env = {
+          debsStage = debsStage4;
+        };
         debInputs = [ debsStage4 ];
       }
       {
