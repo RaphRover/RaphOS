@@ -4,6 +4,7 @@ source $NIX_ATTRS_SH_FILE
 
 # Configuration
 USER_NAME=raph
+VNC_PASSWORD=fictionlab
 
 my_chroot() {
     env -i \
@@ -36,8 +37,10 @@ chmod +x /mnt/etc/lightdm/headless-res.sh
 # Disable autostart applications
 echo "Hidden=true" >> /mnt/etc/xdg/autostart/lxqt-powermanagement.desktop
 
-# echo -n " video=HDMI-A-1:1280x800@30D" >> /mnt/boot/firmware/cmdline.txt
+# Set VNC password for x0vncserver
+echo "$VNC_PASSWORD" | my_chroot /mnt vncpasswd -f > /mnt/etc/x0vncserver.passwd
 
+# Enable x0vncserver service
 my_chroot /mnt systemctl enable x0vncserver
 
 # Unmount everything

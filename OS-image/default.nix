@@ -210,6 +210,7 @@ let
       "breeze-cursor-theme" # LXQt cursor theme
       "firefox-esr" # Web browser
       "tigervnc-scraping-server" # VNC server
+      "tigervnc-tools" # VNC utilities (vncpasswd)
 
       "ros-jazzy-desktop"
       "ros-jazzy-raph-desktop"

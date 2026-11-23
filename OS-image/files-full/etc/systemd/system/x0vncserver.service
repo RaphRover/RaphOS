@@ -6,7 +6,7 @@ After=network.target lightdm.service
 Type=simple
 Environment=HOME=/root
 Environment=XAUTHORITY=/var/run/lightdm/root/:0
-ExecStart=/usr/bin/x0vncserver -display :0 -fg -SecurityTypes=None -AlwaysShared -rfbport=5900 -localhost=0 --I-KNOW-THIS-IS-INSECURE
+ExecStart=/usr/bin/x0vncserver -display :0 -fg -SecurityTypes=VncAuth -PasswordFile=/etc/x0vncserver.passwd -AlwaysShared -rfbport=5900 -localhost=0
 Restart=on-failure
 RestartSec=500ms
 
