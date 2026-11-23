@@ -157,6 +157,7 @@ let
       "avahi-daemon" # mDNS support
       "openssh-server" # Remote login
       "nginx" # Web server
+      "hostname" # Hostname management
 
       "---"
 
