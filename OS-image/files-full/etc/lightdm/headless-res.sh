@@ -10,6 +10,10 @@ if xrandr | grep -q '^HDMI-1 disconnected'; then
 fi
 
 # x0vncserver reads the screen size only at startup, so restart it after any resize.
-systemctl --no-block restart x0vncserver.service
+# Only if the user hasn't disabled it: `restart` ignores enablement and would
+# otherwise bring it back regardless.
+if systemctl is-enabled --quiet x0vncserver.service; then
+    systemctl --no-block restart x0vncserver.service
+fi
 
 exit 0
