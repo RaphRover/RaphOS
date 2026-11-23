@@ -20,7 +20,7 @@ let
     let
       noble-updates-stamp = "20261119T120000Z";
       ros2-stamp = "2026-11-16";
-      # fictionlab-stamp = "2026-03-30";
+      fictionlab-stamp = "2026-11-23";
     in
     [
       {
@@ -77,7 +77,7 @@ let
         name = "fictionlab";
         packagesFile = (
           fetchurl {
-            url = "https://archive.fictionlab.pl/dists/noble/main/binary-amd64/Packages.gz";
+            url = "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
             sha256 = "sha256-Ns4jsA3LxCZq1PEmgOWlpIrU3nYJ2NYeH4+LyvI50us=";
           }
         );
@@ -244,7 +244,9 @@ let
         env = { debsStage = debsStage2; };
         debInputs = [ debsStage2 ];
       }
-      {
+        env = {
+          debsStage = debsStage2;
+        };
         name = "stage3";
         outputName = "OSStage3Image";
         script = scripts.stage3;
