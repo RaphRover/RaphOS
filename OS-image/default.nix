@@ -10,15 +10,17 @@ let
   imageSize = 8192;
   memSize = 4096;
 
-  files = pkgs.callPackage ./files { };
+  files-lite = pkgs.callPackage ./files-lite { };
 
-  scripts = pkgs.callPackage ./scripts { inherit files imageBuilder; };
+  files-full = pkgs.callPackage ./files-full { };
+
+  scripts = pkgs.callPackage ./scripts { inherit files-lite files-full imageBuilder; };
 
   packageLists =
     let
-      noble-updates-stamp = "20260313T120000Z";
-      ros2-stamp = "2026-01-28";
-      fictionlab-stamp = "2026-03-30";
+      noble-updates-stamp = "20261119T120000Z";
+      ros2-stamp = "2026-11-16";
+      fictionlab-stamp = "2026-11-23";
     in
     [
       {
@@ -46,7 +48,7 @@ let
         packagesFile = (
           fetchurl {
             url = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/main/binary-amd64/Packages.xz";
-            sha256 = "sha256-HKkVlPgye9ZWosAhH/QHYbsQxFLv2TGS7FAF7ps+6sQ=";
+            sha256 = "sha256-M9hCEsPuHkLZQquLKdUebr8K3k7/2kKtzc7DPWWAjuc=";
           }
         );
         urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
@@ -56,7 +58,7 @@ let
         packagesFile = (
           fetchurl {
             url = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}/dists/noble-updates/universe/binary-amd64/Packages.xz";
-            sha256 = "sha256-sCYnJUnCVBHuEYU47ZA1EbB1YPiumXv4q09EY7yP89A=";
+            sha256 = "sha256-erTe4skOs0F3S+cXGivRVNyEsARl43j6ukCgJU4EF8I=";
           }
         );
         urlPrefix = "http://snapshot.ubuntu.com/ubuntu/${noble-updates-stamp}";
@@ -66,7 +68,7 @@ let
         packagesFile = (
           fetchurl {
             url = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu/dists/noble/main/binary-amd64/Packages.bz2";
-            sha256 = "sha256-6U3UJEVPPz27vEfUwPalhbpML1DKUL98ofvUktdJ7Vw=";
+            sha256 = "sha256-8JU838nT8HQf5RkDCzr/0ST8Sid6rg8msATq/sTXfn8=";
           }
         );
         urlPrefix = "http://snapshots.ros.org/jazzy/${ros2-stamp}/ubuntu";
@@ -76,7 +78,7 @@ let
         packagesFile = (
           fetchurl {
             url = "https://archive.fictionlab.pl/dists/noble/snapshots/${fictionlab-stamp}/main/binary-amd64/Packages.gz";
-            sha256 = "sha256-4QLNplKdPIouOMhJEJYILncOldD+jvdEGbFDCPI3UGA=";
+            sha256 = "sha256-Ns4jsA3LxCZq1PEmgOWlpIrU3nYJ2NYeH4+LyvI50us=";
           }
         );
         urlPrefix = "https://archive.fictionlab.pl";
@@ -155,6 +157,7 @@ let
       "avahi-daemon" # mDNS support
       "openssh-server" # Remote login
       "nginx" # Web server
+      "hostname" # Hostname management
 
       "---"
 
@@ -190,6 +193,28 @@ let
       "ros-jazzy-micro-ros-agent"
       "ros-jazzy-raph-robot"
       "raph-ui"
+
+      "---"
+
+      # STAGE 4 - Desktop packages
+      "xorg" # X11 server
+      "xserver-xorg-video-fbdev" # X11 framebuffer driver
+      "lxqt" # Desktop environment
+      "openbox" # Window manager
+      "lightdm" # Display manager
+      "lightdm-gtk-greeter" # Greeter for lightdm
+      "accountsservice" # User account management
+      "gvfs" # Trash support
+      "lubuntu-artwork" # LXQt theme
+      "papirus-icon-theme" # LXQt icon theme
+      "kde-style-breeze" # LXQt color scheme
+      "breeze-cursor-theme" # LXQt cursor theme
+      "firefox-esr" # Web browser
+      "tigervnc-scraping-server" # VNC server
+      "tigervnc-tools" # VNC utilities (vncpasswd)
+
+      "ros-jazzy-desktop"
+      "ros-jazzy-raph-desktop"
     ];
   }) { inherit fetchurl; };
 
@@ -199,6 +224,7 @@ let
   debsStage1 = exportStage 1;
   debsStage2 = exportStage 2;
   debsStage3 = exportStage 3;
+  debsStage4 = exportStage 4;
 
   imageStages = imageBuilder.mkImageStageChain {
     name = "OS";
@@ -211,26 +237,47 @@ let
         outputName = "OSStage1Image";
         script = scripts.stage1;
         env = { inherit debsStage0 debsStage1; };
-        debInputs = [ debsStage0 debsStage1 ];
+        debInputs = [
+          debsStage0
+          debsStage1
+        ];
       }
       {
         name = "stage2";
         outputName = "OSStage2Image";
         script = scripts.stage2;
-        env = { debsStage = debsStage2; };
+        env = {
+          debsStage = debsStage2;
+        };
         debInputs = [ debsStage2 ];
       }
       {
         name = "stage3";
         outputName = "OSStage3Image";
         script = scripts.stage3;
-        env = { debsStage = debsStage3; };
+        env = {
+          debsStage = debsStage3;
+        };
         debInputs = [ debsStage3 ];
       }
       {
         name = "stage4";
         outputName = "OSStage4Image";
         script = scripts.stage4;
+      }
+      {
+        name = "stage5";
+        outputName = "OSStage5Image";
+        script = scripts.stage5;
+        env = {
+          debsStage = debsStage4;
+        };
+        debInputs = [ debsStage4 ];
+      }
+      {
+        name = "stage6";
+        outputName = "OSStage6Image";
+        script = scripts.stage6;
       }
     ];
   };
@@ -240,6 +287,8 @@ rec {
   OSStage2Image = imageStages.OSStage2Image;
   OSStage3Image = imageStages.OSStage3Image;
   OSStage4Image = imageStages.OSStage4Image;
+  OSStage5Image = imageStages.OSStage5Image;
+  OSStage6Image = imageStages.OSStage6Image;
 
   OSLiteImage = imageBuilder.mkQcow2ImageStage {
     pname = "${OSName}-lite-image";
@@ -259,6 +308,28 @@ rec {
     osName = OSName;
     osVersion = OSVersion;
     variant = "lite";
+    filename = "OS.img";
+    repairGpt = true;
+  };
+
+  OSFullImage = imageBuilder.mkQcow2ImageStage {
+    pname = "${OSName}-full-image";
+    version = OSVersion;
+    inherit memSize;
+    previousImage = OSStage6Image;
+    script = scripts.stageFinal;
+    logOutput = true;
+    env = {
+      inherit OSName OSVersion;
+      OSVariant = "full";
+    };
+  };
+
+  OSFullRawImage = imageBuilder.mkRawImage {
+    image = OSFullImage;
+    osName = OSName;
+    osVersion = OSVersion;
+    variant = "full";
     filename = "OS.img";
     repairGpt = true;
   };

@@ -75,25 +75,24 @@ map_file="$(mktemp)"
 trap 'rm -f "$map_file"' EXIT
 
 awk '
-  BEGIN { in_block=0; url=""; sha=""; expect_url=0 }
-  /packagesFile[[:space:]]*=\s*\(fetchurl[[:space:]]*\{/ { in_block=1; url=""; sha=""; expect_url=0; next }
+  BEGIN { in_block=0; pending=0; url=""; sha="" }
+  !in_block && /packagesFile[[:space:]]*=/ { pending=1 }
+  pending && /fetchurl[[:space:]]*\{/ { in_block=1; pending=0; url=""; sha="" }
   in_block && /url[[:space:]]*=/ {
-    # handle url on same or next line
-    expect_url=1
-    if (match($0, /"([^"]+)"/, m)) { url=m[1]; expect_url=0 }
+    url=$0
+    sub(/^[^"]*"/, "", url)
+    sub(/".*/, "", url)
     next
   }
-  in_block && expect_url==1 {
-    if (match($0, /"([^"]+)"/, m)) { url=m[1]; expect_url=0 }
-  }
   in_block && /sha256[[:space:]]*=/ {
-    # capture quoted sha
-    if (match($0, /sha256[[:space:]]*=\s*"([^"]+)"/, m)) { sha=m[1] }
+    sha=$0
+    sub(/^[^"]*"/, "", sha)
+    sub(/".*/, "", sha)
     # output: line_number|current_sha|url
     printf "%d|%s|%s\n", NR, sha, url
     next
   }
-  in_block && /\}\);/ { in_block=0; url=""; sha=""; expect_url=0; next }
+  in_block && /^[[:space:]]*\}/ { in_block=0; url=""; sha="" }
 ' "$target_file" > "$map_file"
 
 if [[ "$list_only" == true ]]; then
